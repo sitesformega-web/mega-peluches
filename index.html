@@ -1,114 +1,161 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Catálogo</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
-  <style>
-   
-    <script>
-  // Avisar la altura real del contenido al iframe padre
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo Mega Peluches</title>
+
+<!-- Fuente Lato -->
+<link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: 'Lato', sans-serif;
+    margin: 20px;
+    background: #f9f9f9;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .product-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    background: #fff;
+  }
+
+  .product-card img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  .qty-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+  }
+
+  .qty-container button {
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  .whatsapp-btn {
+    background-color: #25D366;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    text-decoration: none;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Catálogo Mega Peluches</h1>
+
+<div class="product-grid" id="product-list"></div>
+
+<script>
+  // ==========================
+  // DATOS DE LOS PRODUCTOS
+  // ==========================
+  const products = [
+    {
+      nombre: "Peluche - 0001",
+      detalle: "Suave y grande",
+      codigo: "0001",
+      precioMinorista: "15000",
+      precioMayorista: "12000",
+      whatsapp: "595994151453",
+      imagen: "https://drive.google.com/uc?export=view&id=1ZCn7scK3lI0wLnoBeuNKdi0-DpFLFVpN"
+    },
+    {
+      nombre: "Peluche - 0002",
+      detalle: "Pequeño y colorido",
+      codigo: "0002",
+      precioMinorista: "8000",
+      precioMayorista: "6000",
+      whatsapp: "595994151453",
+      imagen: "https://drive.google.com/uc?export=view&id=1Y9FqXnZrWcaibB9fq1a6ADhJ1PEKX0"
+    }
+    // ... agregá todos tus productos aquí
+  ];
+
+  const productList = document.getElementById('product-list');
+
+  products.forEach((prod, index) => {
+    let qty = 1;
+
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <img src="${prod.imagen}" alt="${prod.nombre}">
+      <h3>${prod.nombre}</h3>
+      <p>${prod.detalle}</p>
+      <p>Precio Minorista: ${prod.precioMinorista} Gs</p>
+      <p>Precio Mayorista: ${prod.precioMayorista} Gs</p>
+      <div class="qty-container">
+        <button id="minus-${index}">-</button>
+        <span id="qty-${index}">${qty}</span>
+        <button id="plus-${index}">+</button>
+      </div>
+      <a id="wa-${index}" class="whatsapp-btn" target="_blank" href="#">
+        Comprar por WhatsApp
+      </a>
+    `;
+    productList.appendChild(card);
+
+    const qtySpan = document.getElementById(`qty-${index}`);
+    const waBtn = document.getElementById(`wa-${index}`);
+
+    const updateLink = () => {
+      waBtn.href = `https://wa.me/${prod.whatsapp}?text=Hola%20quiero%20comprar%20${qty}%20${encodeURIComponent(prod.nombre)}`;
+    };
+
+    document.getElementById(`minus-${index}`).onclick = () => {
+      qty = Math.max(1, qty-1);
+      qtySpan.innerText = qty;
+      updateLink();
+    };
+
+    document.getElementById(`plus-${index}`).onclick = () => {
+      qty++;
+      qtySpan.innerText = qty;
+      updateLink();
+    };
+
+    updateLink(); // inicializa el link
+  });
+
+  // ==========================
+  // Ajuste de altura para iframe en Sites
+  // ==========================
   function sendHeight() {
     const height = document.body.scrollHeight;
     parent.postMessage({ frameHeight: height }, "*");
   }
 
-  // Enviar altura al cargar y cada vez que cambia el tamaño
   window.onload = sendHeight;
   window.onresize = sendHeight;
 </script>
 
-    body {
-      font-family: 'Lato', sans-serif;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      padding: 20px;
-    }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      width: 250px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .card img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    .price {
-      margin: 5px 0;
-    }
-    .qty-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .whatsapp-btn {
-      background-color: green;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="catalogo"></div>
-
-  <script>
-    const endpoint = "https://script.google.com/macros/s/AKfycbxkyx093MjGLTsUgR1jAeH0IIR60bRBIkWEfo8e5XS-d-WEcx282NISh9yLCOwjT4IjJA/exec"; // 👈 la URL del paso anterior
-
-    fetch(endpoint)
-      .then(res => res.json())
-      .then(data => {
-        const contenedor = document.getElementById("catalogo");
-
-        data.forEach((p, index) => {
-          let qty = 1;
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <img src="${p.Imagen}" alt="${p['Nombre del producto']}">
-            <h3>${p['Nombre del producto']}</h3>
-            <p>${p.Detalle || ''}</p>
-            <div class="price">Minorista: Gs. ${p['Precio Minorista']}</div>
-            <div class="price">Mayorista: Gs. ${p['Precio Mayorista']}</div>
-            <div class="qty-controls">
-              <button id="menos-${index}">-</button>
-              <span id="qty-${index}">1</span>
-              <button id="mas-${index}">+</button>
-            </div>
-            <a id="btn-${index}" href="https://wa.me/${p.WhatsApp}?text=Hola%20quiero%20comprar%201%20${encodeURIComponent(p['Nombre del producto'])}" target="_blank">
-              <button class="whatsapp-btn">Comprar por WhatsApp</button>
-            </a>
-          `;
-          contenedor.appendChild(card);
-
-          // Control de cantidad
-          const qtySpan = card.querySelector(`#qty-${index}`);
-          const btnLink = card.querySelector(`#btn-${index}`);
-          card.querySelector(`#menos-${index}`).addEventListener("click", () => {
-            qty = Math.max(1, qty - 1);
-            qtySpan.innerText = qty;
-            btnLink.href = `https://wa.me/${p.WhatsApp}?text=Hola%20quiero%20comprar%20${qty}%20${encodeURIComponent(p['Nombre del producto'])}`;
-          });
-          card.querySelector(`#mas-${index}`).addEventListener("click", () => {
-            qty++;
-            qtySpan.innerText = qty;
-            btnLink.href = `https://wa.me/${p.WhatsApp}?text=Hola%20quiero%20comprar%20${qty}%20${encodeURIComponent(p['Nombre del producto'])}`;
-          });
-        });
-      });
-  </script>
 </body>
 </html>
+
+
 
 
 
