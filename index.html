@@ -1,161 +1,79 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catálogo Mega Peluches</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    .info {
-      flex-grow: 1;
-    }
-    .info h2 {
-      font-size: 18px;
-      margin: 5px 0;
-    }
-    .info p {
-      margin: 3px 0;
-      font-size: 14px;
-      color: #555;
-    }
-    .prices {
-      margin: 8px 0;
-      font-size: 14px;
-    }
-    .prices strong {
-      display: block;
-    }
-    .actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 10px;
-    }
-    .actions input {
-      width: 60px;
-      padding: 5px;
-      text-align: center;
-    }
-    .btn {
-      background: #25d366;
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .btn:hover {
-      background: #1ebe5d;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-      .grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catálogo Mega Peluches</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
+  h1 { text-align:center; margin-bottom:30px; }
+  .grid { display: grid; grid-template-columns: repeat(4,1fr); gap:20px; }
+  .card { background:white; border-radius:10px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.15); display:flex; flex-direction:column; }
+  .card img { width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:10px; }
+  .info h2 { font-size:18px; margin:5px 0; }
+  .info p { margin:3px 0; font-size:14px; color:#555; }
+  .prices strong { display:block; }
+  .actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .actions input { width:60px; padding:5px; text-align:center; }
+  .btn { background:#25d366; color:white; padding:8px 12px; border:none; border-radius:6px; text-decoration:none; font-size:14px; cursor:pointer; }
+  .btn:hover { background:#1ebe5d; }
+  @media(max-width:1200px){.grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
-  <h1>Catálogo Mega Peluches</h1>
-  <div class="grid" id="catalogo"></div>
+<h1>Catálogo Mega Peluches</h1>
+<div class="grid" id="catalogo"></div>
 
-  <script>
-    const url = "https://script.google.com/macros/s/AKfycbwOmpOo1x6NpmEvAjk0KZYC0MIPDPDxl26mbnYVjHJVdx6AhVSoXbwjsezyaJPRiYiQ2Q/exec";
-    const whatsappNumber = "595986830888"; // Paraguay +595
+<script>
+const url = "https://script.google.com/macros/s/AKfycbwOmpOo1x6NpmEvAjk0KZYC0MIPDPDxl26mbnYVjHJVdx6AhVSoXbwjsezyaJPRiYiQ2Q/exec";
+const whatsappNumber = "595986830888";
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        const contenedor = document.getElementById("catalogo");
-        data.forEach(item => {
-          const nombre = (item["Nombre del producto"] || "").trim();
-          const detalle = (item["Detalle"] || "").trim();
-          const codigo = (item["Código"] || "").toString().trim();
-          const precioMinorista = (item["Precio Minorista"] || "").toString().trim();
-          const precioMayorista = (item["Precio Mayorista"] || "").toString().trim();
-          const imagen = (item["Imagen"] || "").trim();
+fetch(url)
+  .then(res => res.json())
+  .then(data => {
+    const contenedor = document.getElementById("catalogo");
 
-          // Creamos la tarjeta de producto
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <img src="${imagen}" alt="${nombre}" 
-              onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'"/>
-            <div class="info">
-              <h2>${nombre}</h2>
-              <p>${detalle}</p>
-              <p><strong>Código:</strong> ${codigo}</p>
-              <div class="prices">
-                <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
-                <strong>Mayorista:</strong> Gs. ${precioMayorista}
-              </div>
-            </div>
-            <div class="actions">
-              <input type="number" value="1" min="1" id="qty-${codigo}" />
-              <a class="btn" target="_blank"
-                href="https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: 1">
-                Pedir
-              </a>
-            </div>
-          `;
+    // Forzamos que se iteren todos los productos
+    data.forEach(item => {
+      const nombre = (item["Nombre del producto"]||"").trim();
+      const detalle = (item["Detalle"]||"").trim();
+      const codigo = (item["Código"]||"").toString().trim();
+      const precioMinorista = (item["Precio Minorista"]||"").toString().trim();
+      const precioMayorista = (item["Precio Mayorista"]||"").toString().trim();
+      const imagen = (item["Imagen"]||"").trim();
 
-          // Actualizar link según cantidad seleccionada
-          const qtyInput = card.querySelector(`#qty-${codigo}`);
-          const btn = card.querySelector(".btn");
-          qtyInput.addEventListener("input", () => {
-            const qty = qtyInput.value;
-            btn.href = `https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: ${qty}`;
-          });
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
+        <div class="info">
+          <h2>${nombre}</h2>
+          <p>${detalle}</p>
+          <p><strong>Código:</strong> ${codigo}</p>
+          <div class="prices">
+            <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
+            <strong>Mayorista:</strong> Gs. ${precioMayorista}
+          </div>
+        </div>
+        <div class="actions">
+          <input type="number" value="1" min="1" id="qty-${codigo}" />
+          <a class="btn" target="_blank" href="https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: 1">Pedir</a>
+        </div>
+      `;
 
-          contenedor.appendChild(card);
-        });
-      })
-      .catch(err => {
-        console.error("Error cargando productos:", err);
+      const qtyInput = card.querySelector(`#qty-${codigo}`);
+      const btn = card.querySelector(".btn");
+      qtyInput.addEventListener("input", ()=> {
+        const qty = qtyInput.value;
+        btn.href = `https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: ${qty}`;
       });
-  </script>
+
+      contenedor.appendChild(card);
+    });
+  })
+  .catch(err=>console.error("Error cargando productos:",err));
+</script>
 </body>
 </html>
