@@ -5,6 +5,19 @@
   <title>Catálogo</title>
   <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
   <style>
+   
+    <script>
+  // Avisar la altura real del contenido al iframe padre
+  function sendHeight() {
+    const height = document.body.scrollHeight;
+    parent.postMessage({ frameHeight: height }, "*");
+  }
+
+  // Enviar altura al cargar y cada vez que cambia el tamaño
+  window.onload = sendHeight;
+  window.onresize = sendHeight;
+</script>
+
     body {
       font-family: 'Lato', sans-serif;
       display: flex;
@@ -96,5 +109,6 @@
   </script>
 </body>
 </html>
+
 
 
