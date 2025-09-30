@@ -70,75 +70,60 @@
 
 <script>
   // ==========================
-  // DATOS DE LOS PRODUCTOS
+  // CONFIGURACIÓN DEL JSON
   // ==========================
-  const products = [
-    {
-      nombre: "Peluche - 0001",
-      detalle: "Suave y grande",
-      codigo: "0001",
-      precioMinorista: "15000",
-      precioMayorista: "12000",
-      whatsapp: "595994151453",
-      imagen: "https://drive.google.com/uc?export=view&id=1ZCn7scK3lI0wLnoBeuNKdi0-DpFLFVpN"
-    },
-    {
-      nombre: "Peluche - 0002",
-      detalle: "Pequeño y colorido",
-      codigo: "0002",
-      precioMinorista: "8000",
-      precioMayorista: "6000",
-      whatsapp: "595994151453",
-      imagen: "https://drive.google.com/uc?export=view&id=1Y9FqXnZrWcaibB9fq1a6ADhJ1PEKX0"
-    }
-    // ... agregá todos tus productos aquí
-  ];
+  const endpoint = "https://script.google.com/macros/s/AKfycbwOmpOo1x6NpmEvAjk0KZYC0MIPDPDxl26mbnYVjHJVdx6AhVSoXbwjsezyaJPRiYiQ2Q/exec"; // <-- reemplazá con el URL JSON generado por Apps Script
 
-  const productList = document.getElementById('product-list');
+  fetch(endpoint)
+    .then(response => response.json())
+    .then(products => {
+      const productList = document.getElementById('product-list');
 
-  products.forEach((prod, index) => {
-    let qty = 1;
+      products.forEach((prod, index) => {
+        let qty = 1;
 
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.innerHTML = `
-      <img src="${prod.imagen}" alt="${prod.nombre}">
-      <h3>${prod.nombre}</h3>
-      <p>${prod.detalle}</p>
-      <p>Precio Minorista: ${prod.precioMinorista} Gs</p>
-      <p>Precio Mayorista: ${prod.precioMayorista} Gs</p>
-      <div class="qty-container">
-        <button id="minus-${index}">-</button>
-        <span id="qty-${index}">${qty}</span>
-        <button id="plus-${index}">+</button>
-      </div>
-      <a id="wa-${index}" class="whatsapp-btn" target="_blank" href="#">
-        Comprar por WhatsApp
-      </a>
-    `;
-    productList.appendChild(card);
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <img src="${prod.imagen}" alt="${prod.nombre}">
+          <h3>${prod.nombre}</h3>
+          <p>${prod.detalle}</p>
+          <p>Precio Minorista: ${prod.precioMinorista} Gs</p>
+          <p>Precio Mayorista: ${prod.precioMayorista} Gs</p>
+          <div class="qty-container">
+            <button id="minus-${index}">-</button>
+            <span id="qty-${index}">${qty}</span>
+            <button id="plus-${index}">+</button>
+          </div>
+          <a id="wa-${index}" class="whatsapp-btn" target="_blank" href="#">
+            Comprar por WhatsApp
+          </a>
+        `;
+        productList.appendChild(card);
 
-    const qtySpan = document.getElementById(`qty-${index}`);
-    const waBtn = document.getElementById(`wa-${index}`);
+        const qtySpan = document.getElementById(`qty-${index}`);
+        const waBtn = document.getElementById(`wa-${index}`);
 
-    const updateLink = () => {
-      waBtn.href = `https://wa.me/${prod.whatsapp}?text=Hola%20quiero%20comprar%20${qty}%20${encodeURIComponent(prod.nombre)}`;
-    };
+        const updateLink = () => {
+          waBtn.href = `https://wa.me/${prod.whatsapp}?text=Hola%20quiero%20comprar%20${qty}%20${encodeURIComponent(prod.nombre)}`;
+        };
 
-    document.getElementById(`minus-${index}`).onclick = () => {
-      qty = Math.max(1, qty-1);
-      qtySpan.innerText = qty;
-      updateLink();
-    };
+        document.getElementById(`minus-${index}`).onclick = () => {
+          qty = Math.max(1, qty-1);
+          qtySpan.innerText = qty;
+          updateLink();
+        };
 
-    document.getElementById(`plus-${index}`).onclick = () => {
-      qty++;
-      qtySpan.innerText = qty;
-      updateLink();
-    };
+        document.getElementById(`plus-${index}`).onclick = () => {
+          qty++;
+          qtySpan.innerText = qty;
+          updateLink();
+        };
 
-    updateLink(); // inicializa el link
-  });
+        updateLink(); // inicializa el link
+      });
+    })
+    .catch(err => console.error("Error cargando productos:", err));
 
   // ==========================
   // Ajuste de altura para iframe en Sites
@@ -148,14 +133,11 @@
     parent.postMessage({ frameHeight: height }, "*");
   }
 
-  window.onload = sendHeight;
-  window.onresize = sendHeight;
+  window.onload = () => { 
+    sendHeight(); 
+    window.addEventListener('resize', sendHeight);
+  };
 </script>
 
 </body>
 </html>
-
-
-
-
-
