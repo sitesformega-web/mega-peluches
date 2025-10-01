@@ -7,6 +7,8 @@
 <style>
   body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
   h1 { text-align:center; margin-bottom:30px; }
+
+  /* Grid de productos */
   .grid { display: grid; grid-template-columns: repeat(4,1fr); gap:20px; }
   .card { background:white; border-radius:10px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.15); display:flex; flex-direction:column; }
   .card img { width:100%; min-height:200px; object-fit:contain; border-radius:8px; margin-bottom:10px; background:#f0f0f0; }
@@ -15,21 +17,119 @@
   .prices strong { display:block; }
   .actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
   .actions input { width:60px; padding:5px; text-align:center; }
-  .btn { background:#25d366; color:white; padding:8px 12px; border:none; border-radius:6px; text-decoration:none; font-size:14px; cursor:pointer; }
+  .btn { background:#25d366; color:white; padding:8px 12px; border:none; border-radius:6px; text-decoration:none; font-size:14px; cursor:pointer; transition: 0.3s; }
   .btn:hover { background:#1ebe5d; }
+  .btn.agregado { background:#aaa; cursor: default; }
+
+  /* Mini-carrito */
+  #mini-carrito {
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    margin-top: 30px;
+  }
+  #mini-carrito h2 { margin-top:0; margin-bottom:10px; }
+  #mini-carrito ul { list-style: none; padding: 0; margin: 0; }
+  #mini-carrito li { display: flex; justify-content: space-between; align-items:center; margin-bottom: 8px; }
+  #mini-carrito li input { width:50px; padding:3px; margin-left:10px; text-align:center; }
+  .eliminar-btn { margin-left:10px; background:#ff4d4d; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer; }
+  .eliminar-btn:hover { background:#e60000; }
+  #enviar-whatsapp { display: block; margin-top: 15px; text-align: center; }
+
   @media(max-width:1200px){.grid{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
-  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+  @media(max-width:600px){
+    .grid{grid-template-columns:1fr;}
+    #mini-carrito li { flex-direction: column; align-items: flex-start; }
+    #mini-carrito li input { margin-left: 0; margin-top:5px; }
+    .eliminar-btn { margin-left: 0; margin-top:5px; }
+    #enviar-whatsapp { width: 100%; }
+  }
 </style>
 </head>
 <body>
 <h1>Catálogo Mega Peluches</h1>
 <div class="grid" id="catalogo"></div>
 
+<div id="mini-carrito">
+  <h2>Tu carrito</h2>
+  <ul id="lista-carrito"></ul>
+  <a id="enviar-whatsapp" class="btn" target="_blank">Enviar pedido por WhatsApp</a>
+</div>
+
 <script>
 const url = "https://script.google.com/macros/s/AKfycbwOmpOo1x6NpmEvAjk0KZYC0MIPDPDxl26mbnYVjHJVdx6AhVSoXbwjsezyaJPRiYiQ2Q/exec";
 const whatsappNumber = "595986830888";
 
+let carrito = [];
+
+// Función para determinar precio según cantidad
+function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
+  return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
+}
+
+// Función para actualizar la visualización del carrito
+function actualizarCarrito() {
+  const lista = document.getElementById("lista-carrito");
+  lista.innerHTML = "";
+
+  let total = 0;
+  carrito.forEach(item => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
+      <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
+      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>
+    `;
+    lista.appendChild(li);
+    total += item.subtotal;
+  });
+
+  // Mostrar total final
+  const totalLi = document.createElement("li");
+  totalLi.style.fontWeight = "bold";
+  totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
+  lista.appendChild(totalLi);
+
+  // Generar mensaje para WhatsApp
+  const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
+  document.getElementById("enviar-whatsapp").href = `https://wa.me/${whatsappNumber}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+
+  // Actualizar cantidad desde carrito
+  lista.querySelectorAll("input[type=number]").forEach(input => {
+    input.addEventListener("input", () => {
+      const codigo = input.dataset.codigo;
+      const nuevoQty = parseInt(input.value);
+      const producto = carrito.find(p => p.codigo === codigo);
+      if(producto && nuevoQty >= 1){
+        producto.cantidad = nuevoQty;
+        producto.precioUnitario = obtenerPrecio(nuevoQty, producto.precioMinorista, producto.precioMayorista);
+        producto.subtotal = producto.precioUnitario * nuevoQty;
+        actualizarCarrito();
+      }
+    });
+  });
+
+  // Eliminar producto desde carrito
+  lista.querySelectorAll(".eliminar-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const codigo = btn.dataset.codigo;
+      carrito = carrito.filter(p => p.codigo !== codigo);
+
+      // Restaurar botón en grid
+      const cardBtn = document.querySelector(`#qty-${codigo}`).parentNode.querySelector(".btn");
+      if(cardBtn){
+        cardBtn.textContent = "Agregar al carrito";
+        cardBtn.classList.remove("agregado");
+      }
+
+      actualizarCarrito();
+    });
+  });
+}
+
+// Cargar productos desde Google Sheets
 fetch(url)
   .then(res => res.json())
   .then(data => {
@@ -39,8 +139,8 @@ fetch(url)
       const nombre = (item["Nombre del producto"]||"").trim();
       const detalle = (item["Detalle"]||"").trim();
       const codigo = (item["Código"]||"").toString().trim();
-      const precioMinorista = (item["Precio Minorista"]||"").toString().trim();
-      const precioMayorista = (item["Precio Mayorista"]||"").toString().trim();
+      const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
+      const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
       const imagen = (item["Imagen"]||"").trim();
 
       const card = document.createElement("div");
@@ -54,20 +154,39 @@ fetch(url)
           <p><strong>Código:</strong> ${codigo}</p>
           <div class="prices">
             <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
-            <strong>Mayorista:</strong> Gs. ${precioMayorista}
+            <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
           </div>
         </div>
         <div class="actions">
           <input type="number" value="1" min="1" id="qty-${codigo}" />
-          <a class="btn" target="_blank" href="https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: 1">Pedir</a>
+          <button class="btn">Agregar al carrito</button>
         </div>
       `;
 
       const qtyInput = card.querySelector(`#qty-${codigo}`);
       const btn = card.querySelector(".btn");
-      qtyInput.addEventListener("input", ()=> {
-        const qty = qtyInput.value;
-        btn.href = `https://wa.me/${whatsappNumber}?text=Hola! Quiero ${nombre} (cód: ${codigo}) - Cantidad: ${qty}`;
+
+      btn.addEventListener("click", (e)=> {
+        e.preventDefault();
+        const qty = parseInt(qtyInput.value);
+
+        const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
+        const subtotal = precioUnitario * qty;
+
+        const existente = carrito.find(p => p.codigo === codigo);
+        if(existente){
+          existente.cantidad = qty;
+          existente.precioUnitario = precioUnitario;
+          existente.subtotal = subtotal;
+        } else {
+          carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal, precioMinorista: parseInt(precioMinorista), precioMayorista: parseInt(precioMayorista)});
+        }
+
+        // Cambiar indicador visual
+        btn.textContent = "Agregado ✅";
+        btn.classList.add("agregado");
+
+        actualizarCarrito();
       });
 
       contenedor.appendChild(card);
@@ -77,4 +196,3 @@ fetch(url)
 </script>
 </body>
 </html>
-
