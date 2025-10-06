@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Catálogo Mega Peluches</title>
+<title>Ropas para Bebés</title>
 <style>
   body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
   h1 { text-align:center; margin-bottom:30px; }
@@ -37,6 +37,31 @@
   .eliminar-btn:hover { background:#e60000; }
   #enviar-whatsapp { display: block; margin-top: 15px; text-align: center; }
 
+  /* 🔹 Botón flotante del carrito */
+  #boton-carrito {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #25d366;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    cursor: pointer;
+    z-index: 1000;
+    display: none; /* aparece cuando hay productos */
+  }
+  #boton-carrito:hover { background: #1ebe5d; }
+  #contador-carrito {
+    background: #ff3b3b;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
   @media(max-width:1200px){.grid{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
   @media(max-width:600px){
@@ -45,11 +70,12 @@
     #mini-carrito li input { margin-left: 0; margin-top:5px; }
     .eliminar-btn { margin-left: 0; margin-top:5px; }
     #enviar-whatsapp { width: 100%; }
+    #boton-carrito { padding: 10px 16px; font-size: 14px; bottom: 15px; right: 15px; }
   }
 </style>
 </head>
 <body>
-<h1>Catálogo Mega Peluches</h1>
+<h1>Ropas para Bebés</h1>
 <div class="grid" id="catalogo"></div>
 
 <div id="mini-carrito">
@@ -58,8 +84,11 @@
   <a id="enviar-whatsapp" class="btn" target="_blank">Enviar pedido por WhatsApp</a>
 </div>
 
+<!-- 🔹 Botón flotante -->
+<button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
+
 <script>
-const url = "https://script.google.com/macros/s/AKfycbwOmpOo1x6NpmEvAjk0KZYC0MIPDPDxl26mbnYVjHJVdx6AhVSoXbwjsezyaJPRiYiQ2Q/exec";
+const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec";
 const whatsappNumber = "595986830888";
 
 let carrito = [];
@@ -72,6 +101,8 @@ function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
 // Función para actualizar la visualización del carrito
 function actualizarCarrito() {
   const lista = document.getElementById("lista-carrito");
+  const contador = document.getElementById("contador-carrito");
+  const botonFlotante = document.getElementById("boton-carrito");
   lista.innerHTML = "";
 
   let total = 0;
@@ -91,6 +122,14 @@ function actualizarCarrito() {
   totalLi.style.fontWeight = "bold";
   totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
   lista.appendChild(totalLi);
+
+  // Mostrar u ocultar botón flotante según cantidad
+  if(carrito.length > 0){
+    botonFlotante.style.display = "flex";
+    contador.textContent = carrito.length;
+  } else {
+    botonFlotante.style.display = "none";
+  }
 
   // Generar mensaje para WhatsApp
   const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
@@ -128,6 +167,11 @@ function actualizarCarrito() {
     });
   });
 }
+
+// 🔹 Botón flotante hace scroll suave al carrito
+document.getElementById("boton-carrito").addEventListener("click", () => {
+  document.getElementById("mini-carrito").scrollIntoView({ behavior: "smooth" });
+});
 
 // Cargar productos desde Google Sheets
 fetch(url)
