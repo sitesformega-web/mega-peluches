@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo de Vendedores - MegaShop</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-width: 420px;
+      width: 90%;
+    }
+    h2 {
+      text-align: center;
+      color: #293073;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 15px;
+      color: #374151;
+    }
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    button {
+      background: #293073;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #1e275a;
+    }
+    .output {
+      margin-top: 20px;
+      text-align: center;
+      word-wrap: break-word;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed #ccc;
+    }
+    .copy-btn {
+      background: #2563eb;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔗 Generador de Enlaces</h2>
+
+    <label for="vendedor">Vendedor:</label>
+    <select id="vendedor"></select>
+
+    <label for="categoria">Categoría:</label>
+    <select id="categoria"></select>
+
+    <button onclick="generarLink()">Generar enlace</button>
+
+    <div id="resultado" class="output" style="display:none;"></div>
+    <button id="copyBtn" class="copy-btn" style="display:none;" onclick="copiarLink()">📋 Copiar</button>
+  </div>
+
+  <script>
+    // 🔗 NUEVO endpoint combinado (categorías + vendedores)
+    const apiUrl = 'https://script.google.com/macros/s/M-Y5zNLALCUilG_adUZRrhXrJTBDfaNvF/exec';
+    // 🌐 Base del Google Sites
+    const baseUrl = 'https://sites.google.com/view/megashop-lista';
+
+    async function cargarDatos() {
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+
+        const vendedorSelect = document.getElementById('vendedor');
+        const categoriaSelect = document.getElementById('categoria');
+
+        // Detectar hoja de vendedores y categorías
+        const hojaVendedores = data.find(s => s.nombreHoja?.toLowerCase() === 'vendedores');
+        const hojasCategorias = data.filter(s => s.nombreHoja?.toLowerCase() !== 'vendedores');
+
+        // 🧩 Cargar vendedores
+        if (hojaVendedores && hojaVendedores.datos) {
+          hojaVendedores.datos.forEach(v => {
+            if (v.nombre && v.whatsapp) {
+              const option = document.createElement('option');
+              option.value = v.whatsapp.toString().replace(/\s+/g, '');
+              option.textContent = v.nombre;
+              vendedorSelect.appendChild(option);
+            }
+          });
+        }
+
+        // 🗂️ Cargar categorías
+        hojasCategorias.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat.nombreHoja.trim();
+          option.textContent = cat.nombreHoja;
+          categoriaSelect.appendChild(option);
+        });
+
+      } catch (err) {
+        alert("❌ Error al cargar datos desde Sheets");
+        console.error(err);
+      }
+    }
+
+    // 🚀 Generar enlace directo al Sites
+    function generarLink() {
+      const vendedor = document.getElementById('vendedor').value;
+      const categoria = document.getElementById('categoria').value;
+
+      if (!vendedor || !categoria) {
+        alert("Seleccioná un vendedor y una categoría.");
+        return;
+      }
+
+      const link = `${baseUrl}/${encodeURIComponent(categoria)}?wa=${vendedor}`;
+
+      const resultado = document.getElementById('resultado');
+      const copyBtn = document.getElementById('copyBtn');
+
+      resultado.style.display = "block";
+      copyBtn.style.display = "block";
+      resultado.textContent = link;
+    }
+
+    // 📋 Copiar al portapapeles
+    function copiarLink() {
+      const resultado = document.getElementById('resultado');
+      navigator.clipboard.writeText(resultado.textContent);
+      alert("✅ Enlace copiado al portapapeles");
+    }
+
+    // Inicializar
+    cargarDatos();
+  </script>
+</body>
+</html>
+
