@@ -1,18 +1,48 @@
-<script>
-const urlParams = new URLSearchParams(window.location.search);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Navideños</title>
+<style>
+/* TODO: tu CSS actual, sin cambios */
+</style>
+</head>
+<body>
+<h1>Navideños</h1>
 
-// 🔹 Si viene ?wa en la URL, forzar guardado en localStorage
-if(urlParams.get("wa")){
-  localStorage.setItem('vendedorWhatsApp', urlParams.get("wa"));
+<div id="loader-overlay">
+  <div class="punto"></div>
+  <p>Cargando contenido...</p>
+</div>
+
+<div id="acordeones-container"></div>
+
+<div id="mini-carrito">
+  <h2>Tu carrito</h2>
+  <ul id="lista-carrito"></ul>
+  <a id="enviar-whatsapp" class="btn" target="_blank">Enviar pedido por WhatsApp</a>
+</div>
+
+<button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
+
+<script>
+// 🔹 1️⃣ Leer parámetro de URL
+const urlParams = new URLSearchParams(window.location.search);
+const waParam = urlParams.get("wa");
+
+// 🔹 2️⃣ Guardar en localStorage si viene
+if(waParam && waParam.trim() !== ""){
+  localStorage.setItem('vendedorWhatsApp', waParam);
 }
 
-// 🔹 Número del vendedor seguro: localStorage o default
+// 🔹 3️⃣ Número del vendedor: primero localStorage, luego default
 let vendedor = localStorage.getItem('vendedorWhatsApp');
-if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
+if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
   vendedor = "595986830888"; // número por defecto
   localStorage.setItem('vendedorWhatsApp', vendedor);
 }
-console.log("📞 Número de vendedor activo:", vendedor); // 🔹 Verificar en consola
+console.log("📞 Número de vendedor activo:", vendedor); // para debug
 
 const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
@@ -58,7 +88,7 @@ function actualizarCarrito() {
 
   const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
 
-  // 🔹 Enlace WhatsApp dinámico con vendedor correcto
+  // 🔹 Enlace WhatsApp dinámico usando vendedor actual
   document.getElementById("enviar-whatsapp").href = `https://wa.me/${vendedor}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
 }
 
@@ -170,3 +200,5 @@ fetch(url)
     document.getElementById("loader-overlay").innerHTML = "<p>Error al cargar los productos 😢</p>";
   });
 </script>
+</body>
+</html>
