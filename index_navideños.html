@@ -143,7 +143,7 @@ if(urlParams.get("wa")){
   localStorage.setItem('vendedorWhatsApp', urlParams.get("wa"));
 }
 
-// 🔹 Verificar y establecer número del vendedor
+// 🔹 Número del vendedor seguro
 let vendedor = localStorage.getItem('vendedorWhatsApp');
 if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
   vendedor = "595986830888"; // número por defecto
