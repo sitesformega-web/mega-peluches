@@ -136,9 +136,8 @@ h1 { text-align:center; margin-bottom:30px; }
 <button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const vendedor = urlParams.get("wa") || "595986830888"; // número por defecto
 const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
+const whatsappNumber = "595986830888";
 
 let carrito = [];
 
@@ -181,11 +180,145 @@ function actualizarCarrito() {
   }
 
   const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
-  // 🔹 Usar vendedor desde URL
-  document.getElementById("enviar-whatsapp").href = `https://wa.me/${vendedor}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+  document.getElementById("enviar-whatsapp").href = `https://wa.me/${whatsappNumber}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+
+  // Inputs cantidad
+  lista.querySelectorAll("input[type=number]").forEach(input => {
+    input.addEventListener("input", () => {
+      const codigo = input.dataset.codigo;
+      const nuevoQty = parseInt(input.value);
+      const producto = carrito.find(p => p.codigo === codigo);
+      if(producto && nuevoQty >= 1){
+        producto.cantidad = nuevoQty;
+        producto.precioUnitario = obtenerPrecio(nuevoQty, producto.precioMinorista, producto.precioMayorista);
+        producto.subtotal = producto.precioUnitario * nuevoQty;
+        actualizarCarrito();
+      }
+    });
+  });
+
+  // Eliminar producto
+  lista.querySelectorAll(".eliminar-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const codigo = btn.dataset.codigo;
+      carrito = carrito.filter(p => p.codigo !== codigo);
+      document.querySelectorAll(`#qty-${codigo}`).forEach(input => {
+        const cardBtn = input.parentNode.querySelector(".btn");
+        if(cardBtn){ cardBtn.textContent = "Agregar al carrito"; cardBtn.classList.remove("agregado"); }
+      });
+      actualizarCarrito();
+    });
+  });
 }
 
-// resto del código de fetch y acordeones igual que antes...
+// Botón flotante
+document.getElementById("boton-carrito").addEventListener("click", () => {
+  document.getElementById("mini-carrito").scrollIntoView({ behavior: "smooth" });
+});
+
+fetch(url)
+  .then(res => res.json())
+  .then(data => {
+    // 🔹 Ocultar loader al cargar datos
+    document.getElementById("loader-overlay").style.display = "none";
+    document.getElementById("acordeones-container").style.display = "block";
+
+    const container = document.getElementById("acordeones-container");
+
+    const grupos = {};
+    data.forEach(item => {
+      const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
+      if(!grupos[etiqueta]) grupos[etiqueta] = [];
+      grupos[etiqueta].push(item);
+    });
+
+    Object.keys(grupos).forEach(etiqueta => {
+      const acordeon = document.createElement("div");
+      acordeon.className = "acordeon";
+
+      const titulo = document.createElement("div");
+      titulo.className = "acordeon-titulo";
+      titulo.innerHTML = `${etiqueta} <span>+</span>`;
+
+      const contenido = document.createElement("div");
+      contenido.className = "acordeon-contenido";
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+
+      grupos[etiqueta].forEach(item => {
+        const nombre = (item["Nombre del producto"]||"").trim();
+        const detalle = (item["Detalle"]||"").trim();
+        const codigo = (item["Código"]||"").toString().trim();
+        const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
+        const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
+        const imagen = (item["Imagen"]||"").trim();
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${imagen}" alt="${nombre}" loading="lazy" 
+            onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
+          <div class="info">
+            <h2>${nombre}</h2>
+            <p>${detalle}</p>
+            <p><strong>Código:</strong> ${codigo}</p>
+            <div class="prices">
+              <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
+              <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+            </div>
+          </div>
+          <div class="actions">
+            <input type="number" value="1" min="1" id="qty-${codigo}" />
+            <button class="btn">Agregar al carrito</button>
+          </div>
+        `;
+
+        const qtyInput = card.querySelector(`#qty-${codigo}`);
+        const btn = card.querySelector(".btn");
+
+        btn.addEventListener("click", e => {
+          e.preventDefault();
+          const qty = parseInt(qtyInput.value);
+          const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
+          const subtotal = precioUnitario * qty;
+          const existente = carrito.find(p => p.codigo === codigo);
+          if(existente){
+            existente.cantidad = qty;
+            existente.precioUnitario = precioUnitario;
+            existente.subtotal = subtotal;
+          } else {
+            carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal, precioMinorista: parseInt(precioMinorista), precioMayorista: parseInt(precioMayorista)});
+          }
+          btn.textContent = "Agregado ✅";
+          btn.classList.add("agregado");
+          actualizarCarrito();
+        });
+
+        grid.appendChild(card);
+      });
+
+      contenido.appendChild(grid);
+      acordeon.appendChild(titulo);
+      acordeon.appendChild(contenido);
+      container.appendChild(acordeon);
+
+      // Evento acordeón
+      titulo.addEventListener("click", () => {
+        const visible = contenido.style.display === "block";
+        document.querySelectorAll(".acordeon-contenido").forEach(c => c.style.display = "none");
+        document.querySelectorAll(".acordeon-titulo span").forEach(s => s.textContent = "+");
+        if(!visible){
+          contenido.style.display = "block";
+          titulo.querySelector("span").textContent = "−";
+        }
+      });
+    });
+  })
+  .catch(err => {
+    console.error("Error cargando productos:", err);
+    document.getElementById("loader-overlay").innerHTML = "<p>Error al cargar los productos 😢</p>";
+  });
 </script>
 </body>
 </html>
