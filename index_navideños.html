@@ -164,6 +164,7 @@ function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
   return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
 }
 
+/* 🔹 Carrito actualizado */
 function actualizarCarrito() {
   const lista = document.getElementById("lista-carrito");
   const contador = document.getElementById("contador-carrito");
@@ -193,12 +194,28 @@ function actualizarCarrito() {
   } else {
     botonFlotante.style.display = "none";
   }
-
-  const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
-
-  // 🔹 Link WhatsApp siempre con número actualizado
-  document.getElementById("enviar-whatsapp").href = `https://wa.me/${vendedor}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
 }
+
+// 🔹 Envío de pedido dinámico
+document.getElementById("enviar-whatsapp").addEventListener("click", e => {
+  e.preventDefault();
+
+  // Releemos el número del vendedor por si fue actualizado recientemente
+  let vendedor = localStorage.getItem('vendedorWhatsApp');
+  if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
+    vendedor = "595986830888"; // fallback
+  }
+
+  const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
+  const mensaje = carrito.map(i => 
+    `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
+  ).join("%0A");
+
+  const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+  const link = `https://wa.me/${vendedor}?text=${texto}`;
+
+  window.open(link, "_blank");
+});
 
 // Botón flotante
 document.getElementById("boton-carrito").addEventListener("click", () => {
@@ -276,7 +293,7 @@ fetch(url)
             existente.precioUnitario = precioUnitario;
             existente.subtotal = subtotal;
           } else {
-            carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal, precioMinorista: parseInt(precioMinorista), precioMayorista: parseInt(precioMayorista)});
+            carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal});
           }
           btn.textContent = "Agregado ✅";
           btn.classList.add("agregado");
