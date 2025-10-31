@@ -143,8 +143,12 @@ if(urlParams.get("wa")){
   localStorage.setItem('vendedorWhatsApp', urlParams.get("wa"));
 }
 
-// 🔹 Número del vendedor dinámico: primero localStorage, luego default
-const vendedor = localStorage.getItem('vendedorWhatsApp') || "595986830888";
+// 🔹 Verificar y establecer número del vendedor
+let vendedor = localStorage.getItem('vendedorWhatsApp');
+if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
+  vendedor = "595986830888"; // número por defecto
+  localStorage.setItem('vendedorWhatsApp', vendedor);
+}
 
 const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
