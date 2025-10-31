@@ -138,8 +138,13 @@ h1 { text-align:center; margin-bottom:30px; }
 <script>
 const urlParams = new URLSearchParams(window.location.search);
 
-// 🔹 Número del vendedor dinámico: primero localStorage, luego parámetro ?wa, luego default
-const vendedor = localStorage.getItem('vendedorWhatsApp') || urlParams.get("wa") || "595986830888";
+// 🔹 Si viene ?wa en la URL, guardarlo en localStorage
+if(urlParams.get("wa")){
+  localStorage.setItem('vendedorWhatsApp', urlParams.get("wa"));
+}
+
+// 🔹 Número del vendedor dinámico: primero localStorage, luego default
+const vendedor = localStorage.getItem('vendedorWhatsApp') || "595986830888";
 
 const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
@@ -185,7 +190,7 @@ function actualizarCarrito() {
 
   const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
 
-  // 🔹 Enlace WhatsApp dinámico
+  // 🔹 Enlace WhatsApp dinámico con vendedor correcto
   document.getElementById("enviar-whatsapp").href = `https://wa.me/${vendedor}?text=Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
 }
 
