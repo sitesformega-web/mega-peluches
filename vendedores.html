@@ -1,157 +1,152 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo de Vendedores - MegaShop</title>
-  <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      max-width: 420px;
-      width: 90%;
-    }
-    h2 {
-      text-align: center;
-      color: #293073;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      margin-top: 15px;
-      color: #374151;
-    }
-    select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-    }
-    button {
-      background: #293073;
-      color: white;
-      cursor: pointer;
-      margin-top: 20px;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-    button:hover {
-      background: #1e275a;
-    }
-    .output {
-      margin-top: 20px;
-      text-align: center;
-      word-wrap: break-word;
-      background: #f9fafb;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px dashed #ccc;
-    }
-    .copy-btn {
-      background: #2563eb;
-      margin-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Módulo de Vendedores - MegaShop</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    max-width: 420px;
+    width: 90%;
+  }
+  h2 {
+    text-align: center;
+    color: #293073;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-top: 15px;
+    color: #374151;
+  }
+  select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+  }
+  button {
+    background: #293073;
+    color: white;
+    cursor: pointer;
+    margin-top: 20px;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #1e275a;
+  }
+  .output {
+    margin-top: 20px;
+    text-align: center;
+    word-wrap: break-word;
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+  }
+  .copy-btn {
+    background: #2563eb;
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>🔗 Generador de Enlaces</h2>
+<div class="container">
+  <h2>🔗 Generador de Enlaces</h2>
 
-    <label for="vendedor">Vendedor:</label>
-    <select id="vendedor"></select>
+  <label for="vendedor">Vendedor:</label>
+  <select id="vendedor"></select>
 
-    <label for="categoria">Categoría:</label>
-    <select id="categoria"></select>
+  <label for="categoria">Categoría:</label>
+  <select id="categoria"></select>
 
-    <button onclick="generarLink()">Generar enlace</button>
+  <button onclick="generarLink()">Generar enlace</button>
 
-    <div id="resultado" class="output" style="display:none;"></div>
-    <button id="copyBtn" class="copy-btn" style="display:none;" onclick="copiarLink()">📋 Copiar</button>
-  </div>
+  <div id="resultado" class="output" style="display:none;"></div>
+  <button id="copyBtn" class="copy-btn" style="display:none;" onclick="copiarLink()">📋 Copiar</button>
+</div>
 
-  <script>
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec';
-    const baseUrl = 'https://sites.google.com/view/megashop-lista';
+<script>
+  const execUrl = 'https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec';
+  const baseUrl = 'https://sites.google.com/view/megashop-lista';
 
-    async function cargarDatos() {
-      try {
-        const res = await fetch(`${apiUrl}?function=doGetVendedores`);
-        const data = await res.json();
+  async function cargarDatos() {
+    try {
+      // 🔹 Traer la hoja de Vendedores
+      const resV = await fetch(`${execUrl}?sheet=Vendedores`);
+      const dataV = await resV.json();
 
-        const vendedorSelect = document.getElementById('vendedor');
-        const categoriaSelect = document.getElementById('categoria');
-
-        const hojaVendedores = data.find(s => s.nombreHoja?.toLowerCase() === 'vendedores');
-        const hojasCategorias = data.filter(s => s.nombreHoja?.toLowerCase() !== 'vendedores');
-
-        // Cargar vendedores (solo para mostrar)
-        if (hojaVendedores && hojaVendedores.datos) {
-          hojaVendedores.datos.forEach(v => {
-            if (v.nombre && v.whatsapp) {
-              const option = document.createElement('option');
-              option.value = v.whatsapp.toString().replace(/\s+/g, '');
-              option.textContent = v.nombre;
-              vendedorSelect.appendChild(option);
-            }
-          });
-        }
-
-        // Cargar categorías
-        hojasCategorias.forEach(cat => {
+      const vendedorSelect = document.getElementById('vendedor');
+      dataV.forEach(v => {
+        if(v.nombre && v.whatsapp) {
           const option = document.createElement('option');
-          option.value = cat.nombreHoja.trim();
-          option.textContent = cat.nombreHoja;
+          option.value = v.whatsapp.toString().replace(/\s+/g,'');
+          option.textContent = v.nombre;
+          vendedorSelect.appendChild(option);
+        }
+      });
+
+      // 🔹 Traer las categorías (todas las hojas excepto Vendedores)
+      const resHojas = await fetch(execUrl);
+      const dataHojas = await resHojas.json(); // asumimos que devuelve [{nombreHoja:"Navideños"}, {nombreHoja:"Otro"}, ...]
+      const categoriaSelect = document.getElementById('categoria');
+      dataHojas.forEach(h => {
+        if(h.nombreHoja && h.nombreHoja.toLowerCase() !== 'vendedores') {
+          const option = document.createElement('option');
+          option.value = h.nombreHoja.trim();
+          option.textContent = h.nombreHoja;
           categoriaSelect.appendChild(option);
-        });
+        }
+      });
 
-      } catch (err) {
-        alert("❌ Error al cargar datos desde Sheets");
-        console.error(err);
-      }
+    } catch (err) {
+      alert("❌ Error al cargar datos desde Sheets");
+      console.error(err);
+    }
+  }
+
+  function generarLink() {
+    const vendedor = document.getElementById('vendedor').value;
+    const categoria = document.getElementById('categoria').value;
+    if(!vendedor || !categoria) {
+      alert("Seleccioná vendedor y categoría.");
+      return;
     }
 
-    function generarLink() {
-      const categoria = document.getElementById('categoria').value;
-      if (!categoria) {
-        alert("Seleccioná una categoría.");
-        return;
-      }
+    const link = `${baseUrl}/${encodeURIComponent(categoria)}?wa=${vendedor}`;
+    const resultado = document.getElementById('resultado');
+    const copyBtn = document.getElementById('copyBtn');
 
-      // El enlace es solo al catálogo
-      const link = `${baseUrl}/${encodeURIComponent(categoria)}`;
+    resultado.style.display = "block";
+    copyBtn.style.display = "block";
+    resultado.textContent = link;
+  }
 
-      const resultado = document.getElementById('resultado');
-      const copyBtn = document.getElementById('copyBtn');
+  function copiarLink() {
+    const resultado = document.getElementById('resultado');
+    navigator.clipboard.writeText(resultado.textContent);
+    alert("✅ Enlace copiado al portapapeles");
+  }
 
-      resultado.style.display = "block";
-      copyBtn.style.display = "block";
-      resultado.textContent = link;
-    }
-
-    function copiarLink() {
-      const resultado = document.getElementById('resultado');
-      navigator.clipboard.writeText(resultado.textContent);
-      alert("✅ Enlace copiado al portapapeles");
-    }
-
-    cargarDatos();
-  </script>
+  cargarDatos();
+</script>
 </body>
 </html>
-
-
