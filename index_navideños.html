@@ -5,51 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Navideños</title>
 <style>
+/* --- Mismo CSS que tenías --- */
 body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
 h1 { text-align:center; margin-bottom:30px; }
-
-/* 🔹 Loader Overlay */
-#loader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  color: #293073;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-#loader-overlay .punto {
-  width: 25px;
-  height: 25px;
-  background: #293073;
-  border-radius: 50%;
-  margin-bottom: 15px;
-  animation: pulso 1s infinite ease-in-out;
-}
-
-@keyframes pulso {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.6); opacity: 1; }
-}
-
-/* 🔹 Acordeones */
+/* Loader Overlay */
+#loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: #293073; font-size: 18px; font-weight: bold; }
+#loader-overlay .punto { width: 25px; height: 25px; background: #293073; border-radius: 50%; margin-bottom: 15px; animation: pulso 1s infinite ease-in-out; }
+@keyframes pulso { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.6); opacity: 1; } }
+/* Acordeones */
 .acordeon { margin-bottom: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.acordeon-titulo {
-  background: #293073; color: white; padding: 15px;
-  font-size: 18px; cursor: pointer; font-weight: bold;
-  display: flex; justify-content: space-between; align-items: center;
-}
+.acordeon-titulo { background: #293073; color: white; padding: 15px; font-size: 18px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
 .acordeon-titulo:hover { background: #1f2557; }
 .acordeon-contenido { display: none; padding: 20px; background: white; }
-
 /* Grid de productos */
 .grid { display: grid; grid-template-columns: repeat(4,1fr); gap:20px; }
 .card { background:white; border-radius:10px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.15); display:flex; flex-direction:column; }
@@ -62,15 +29,8 @@ h1 { text-align:center; margin-bottom:30px; }
 .btn { background:#25d366; color:white; padding:8px 12px; border:none; border-radius:6px; text-decoration:none; font-size:14px; cursor:pointer; transition: 0.3s; }
 .btn:hover { background:#1ebe5d; }
 .btn.agregado { background:#aaa; cursor: default; }
-
 /* Mini-carrito */
-#mini-carrito {
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  margin-top: 30px;
-}
+#mini-carrito { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); margin-top: 30px; }
 #mini-carrito h2 { margin-top:0; margin-bottom:10px; }
 #mini-carrito ul { list-style: none; padding: 0; margin: 0; }
 #mini-carrito li { display: flex; justify-content: space-between; align-items:center; margin-bottom: 8px; }
@@ -78,48 +38,18 @@ h1 { text-align:center; margin-bottom:30px; }
 .eliminar-btn { margin-left:10px; background:#ff4d4d; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer; }
 .eliminar-btn:hover { background:#e60000; }
 #enviar-whatsapp { display: block; margin-top: 15px; text-align: center; }
-
-/* 🔹 Botón flotante del carrito */
-#boton-carrito {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #25d366;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 12px 20px;
-  font-size: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-  cursor: pointer;
-  z-index: 1000;
-  display: none;
-}
+/* Botón flotante del carrito */
+#boton-carrito { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border: none; border-radius: 50px; padding: 12px 20px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; z-index: 1000; display: none; }
 #boton-carrito:hover { background: #1ebe5d; }
-#contador-carrito {
-  background: #ff3b3b;
-  border-radius: 50%;
-  padding: 2px 8px;
-  font-size: 12px;
-  margin-left: 8px;
-}
-
+#contador-carrito { background: #ff3b3b; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 8px; }
 @media(max-width:1200px){.grid{grid-template-columns:repeat(3,1fr);} }
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);} }
-@media(max-width:600px){
-  .grid{grid-template-columns:1fr;}
-  #mini-carrito li { flex-direction: column; align-items: flex-start; }
-  #mini-carrito li input { margin-left: 0; margin-top:5px; }
-  .eliminar-btn { margin-left: 0; margin-top:5px; }
-  #enviar-whatsapp { width: 100%; }
-  #boton-carrito { padding: 10px 16px; font-size: 14px; bottom: 15px; right: 15px; }
-}
+@media(max-width:600px){ .grid{grid-template-columns:1fr;} #mini-carrito li { flex-direction: column; align-items: flex-start; } #mini-carrito li input { margin-left: 0; margin-top:5px; } .eliminar-btn { margin-left: 0; margin-top:5px; } #enviar-whatsapp { width: 100%; } #boton-carrito { padding: 10px 16px; font-size: 14px; bottom: 15px; right: 15px; } }
 </style>
 </head>
 <body>
 <h1>Navideños</h1>
 
-<!-- 🔹 Loader Overlay -->
 <div id="loader-overlay">
   <div class="punto"></div>
   <p>Cargando contenido...</p>
@@ -139,15 +69,15 @@ h1 { text-align:center; margin-bottom:30px; }
 // 🔹 Captura vendedor dinámico (query string ?wa= o ?vendedor=, o hash #wa=)
 let vendedorParam = null;
 
-// Query string
-if(window.location.search.includes("wa=")){
-  vendedorParam = new URLSearchParams(window.location.search).get("wa");
-} else if(window.location.search.includes("vendedor=")){
-  vendedorParam = new URLSearchParams(window.location.search).get("vendedor");
-}
-// Hash (por si Sites borra parámetros)
-else if(window.location.hash.includes("wa=")){
-  vendedorParam = window.location.hash.split("wa=")[1];
+// Intentar query string
+const params = new URLSearchParams(window.location.search);
+if(params.get("wa")) vendedorParam = params.get("wa");
+else if(params.get("vendedor")) vendedorParam = params.get("vendedor");
+
+// Intentar hash si no se encontró
+if(!vendedorParam && window.location.hash){
+  const match = window.location.hash.match(/wa=(\d+)/);
+  if(match) vendedorParam = match[1];
 }
 
 // Guardar en localStorage si existe
@@ -155,14 +85,14 @@ if(vendedorParam && vendedorParam.trim() !== ""){
   localStorage.setItem('vendedorWhatsApp', vendedorParam.trim());
 }
 
-// 🔹 Usa número dinámico o fallback
+// Número dinámico o fallback
 let vendedor = localStorage.getItem('vendedorWhatsApp');
 if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
-  vendedor = "595986830888"; // número por defecto
+  vendedor = "595986830888"; // fallback por defecto
   localStorage.setItem('vendedorWhatsApp', vendedor);
 }
 
-// 🔹 URL de datos
+// URL de datos
 const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
 let carrito = [];
@@ -175,7 +105,6 @@ function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
   return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
 }
 
-/* 🔹 Carrito actualizado */
 function actualizarCarrito() {
   const lista = document.getElementById("lista-carrito");
   const contador = document.getElementById("contador-carrito");
@@ -185,11 +114,9 @@ function actualizarCarrito() {
   let total = 0;
   carrito.forEach(item => {
     const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
+    li.innerHTML = `<span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
       <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
-      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>
-    `;
+      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>`;
     lista.appendChild(li);
     total += item.subtotal;
   });
@@ -207,23 +134,17 @@ function actualizarCarrito() {
   }
 }
 
-// ✅ Envío de pedido dinámico
+// Enviar pedido WhatsApp
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
-
   let vendedor = localStorage.getItem('vendedorWhatsApp');
   if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
-    vendedor = "595986830888"; // fallback
+    vendedor = "595986830888";
   }
-
   const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
-  const mensaje = carrito.map(i => 
-    `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
-  ).join("%0A");
-
+  const mensaje = carrito.map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
   const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
   const link = `https://wa.me/${vendedor}?text=${texto}`;
-
   window.open(link, "_blank");
 });
 
@@ -250,14 +171,11 @@ fetch(url)
     Object.keys(grupos).forEach(etiqueta => {
       const acordeon = document.createElement("div");
       acordeon.className = "acordeon";
-
       const titulo = document.createElement("div");
       titulo.className = "acordeon-titulo";
       titulo.innerHTML = `${etiqueta} <span>+</span>`;
-
       const contenido = document.createElement("div");
       contenido.className = "acordeon-contenido";
-
       const grid = document.createElement("div");
       grid.className = "grid";
 
@@ -271,8 +189,7 @@ fetch(url)
 
         const card = document.createElement("div");
         card.className = "card";
-        card.innerHTML = `
-          <img src="${imagen}" alt="${nombre}" loading="lazy" 
+        card.innerHTML = `<img src="${imagen}" alt="${nombre}" loading="lazy" 
             onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
           <div class="info">
             <h2>${nombre}</h2>
@@ -286,12 +203,10 @@ fetch(url)
           <div class="actions">
             <input type="number" value="1" min="1" id="qty-${codigo}" />
             <button class="btn">Agregar al carrito</button>
-          </div>
-        `;
+          </div>`;
 
         const qtyInput = card.querySelector(`#qty-${codigo}`);
         const btn = card.querySelector(".btn");
-
         btn.addEventListener("click", e => {
           e.preventDefault();
           const qty = parseInt(qtyInput.value);
@@ -318,7 +233,6 @@ fetch(url)
       acordeon.appendChild(contenido);
       container.appendChild(acordeon);
 
-      // Evento acordeón
       titulo.addEventListener("click", () => {
         const visible = contenido.style.display === "block";
         document.querySelectorAll(".acordeon-contenido").forEach(c => c.style.display = "none");
