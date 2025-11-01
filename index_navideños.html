@@ -136,15 +136,26 @@ h1 { text-align:center; margin-bottom:30px; }
 <button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
+// 🔹 Captura vendedor dinámico (query string ?wa= o ?vendedor=, o hash #wa=)
+let vendedorParam = null;
 
-// ✅ Captura ?vendedor= o ?wa= para asegurar compatibilidad
-const vendedorParam = urlParams.get("vendedor") || urlParams.get("wa");
+// Query string
+if(window.location.search.includes("wa=")){
+  vendedorParam = new URLSearchParams(window.location.search).get("wa");
+} else if(window.location.search.includes("vendedor=")){
+  vendedorParam = new URLSearchParams(window.location.search).get("vendedor");
+}
+// Hash (por si Sites borra parámetros)
+else if(window.location.hash.includes("wa=")){
+  vendedorParam = window.location.hash.split("wa=")[1];
+}
+
+// Guardar en localStorage si existe
 if(vendedorParam && vendedorParam.trim() !== ""){
   localStorage.setItem('vendedorWhatsApp', vendedorParam.trim());
 }
 
-// ✅ Usa número dinámico o fallback
+// 🔹 Usa número dinámico o fallback
 let vendedor = localStorage.getItem('vendedorWhatsApp');
 if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
   vendedor = "595986830888"; // número por defecto
@@ -196,7 +207,7 @@ function actualizarCarrito() {
   }
 }
 
-// ✅ Envío de pedido dinámico (100% funcional)
+// ✅ Envío de pedido dinámico
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
 
