@@ -6,20 +6,7 @@
 <title>Navideños</title>
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
-h1 { text-align:center; margin-bottom:10px; }
-
-/* 🔹 Indicador de vendedor */
-#vendedor-info {
-  text-align: center;
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 20px;
-  background: #e9f7ef;
-  padding: 8px 10px;
-  border-radius: 8px;
-  display: inline-block;
-  border: 1px solid #25d366;
-}
+h1 { text-align:center; margin-bottom:30px; }
 
 /* 🔹 Loader Overlay */
 #loader-overlay {
@@ -129,7 +116,6 @@ h1 { text-align:center; margin-bottom:10px; }
 </head>
 <body>
 <h1>Navideños</h1>
-<div id="vendedor-info"></div>
 
 <!-- 🔹 Loader Overlay -->
 <div id="loader-overlay">
@@ -148,194 +134,183 @@ h1 { text-align:center; margin-bottom:10px; }
 <button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
+// 🔹 Esperar a que el DOM cargue completamente
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const waParam = urlParams.get("wa");
 
-// 🔹 Guardar parámetro ?wa si existe
-const waParam = urlParams.get("wa");
-if (waParam && waParam.trim() !== "") {
-  localStorage.setItem('vendedorWhatsApp', waParam.trim());
-}
-
-// 🔹 Número del vendedor dinámico (localStorage o default)
-let vendedor = localStorage.getItem('vendedorWhatsApp');
-if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
-  vendedor = "595986830888"; // número por defecto
-  localStorage.setItem('vendedorWhatsApp', vendedor);
-}
-
-// 🔹 Mostrar número asignado en el encabezado
-document.getElementById("vendedor-info").textContent =
-  `Vendedor asignado: +${vendedor}`;
-
-// 🔹 URL de datos
-const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
-
-let carrito = [];
-
-// Mostrar loader al iniciar
-document.getElementById("loader-overlay").style.display = "flex";
-document.getElementById("acordeones-container").style.display = "none";
-
-function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
-  return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
-}
-
-function actualizarCarrito() {
-  const lista = document.getElementById("lista-carrito");
-  const contador = document.getElementById("contador-carrito");
-  const botonFlotante = document.getElementById("boton-carrito");
-  lista.innerHTML = "";
-
-  let total = 0;
-  carrito.forEach(item => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
-      <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
-      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>
-    `;
-    lista.appendChild(li);
-    total += item.subtotal;
-  });
-
-  const totalLi = document.createElement("li");
-  totalLi.style.fontWeight = "bold";
-  totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
-  lista.appendChild(totalLi);
-
-  if(carrito.length > 0){
-    botonFlotante.style.display = "flex";
-    contador.textContent = carrito.length;
-  } else {
-    botonFlotante.style.display = "none";
-  }
-}
-
-// 🔹 Envío de pedido dinámico (garantizado)
-document.getElementById("enviar-whatsapp").addEventListener("click", e => {
-  e.preventDefault();
-
-  // Siempre leer el último valor de localStorage
-  let vendedorActual = localStorage.getItem('vendedorWhatsApp');
-  if (!vendedorActual || vendedorActual.trim() === "" || vendedorActual === "null" || vendedorActual === "undefined") {
-    vendedorActual = "595986830888";
+  if (waParam && waParam.trim() !== "") {
+    localStorage.setItem("vendedorWhatsApp", waParam.trim());
   }
 
-  const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
-  const mensaje = carrito.map(i => 
-    `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
-  ).join("%0A");
+  let vendedor = localStorage.getItem("vendedorWhatsApp");
+  if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
+    vendedor = "595986830888"; // número por defecto
+    localStorage.setItem("vendedorWhatsApp", vendedor);
+  }
 
-  const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
-  const link = `https://wa.me/${vendedorActual}?text=${texto}`;
-  window.open(link, "_blank");
-});
+  // Guardar global para uso en todo el script
+  window.vendedorGlobal = vendedor;
 
-document.getElementById("boton-carrito").addEventListener("click", () => {
-  document.getElementById("mini-carrito").scrollIntoView({ behavior: "smooth" });
-});
+  // Lógica del catálogo:
+  const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
+  let carrito = [];
 
-// Cargar productos
-fetch(url)
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("loader-overlay").style.display = "none";
-    document.getElementById("acordeones-container").style.display = "block";
+  document.getElementById("loader-overlay").style.display = "flex";
+  document.getElementById("acordeones-container").style.display = "none";
 
-    const container = document.getElementById("acordeones-container");
-    const grupos = {};
-    data.forEach(item => {
-      const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
-      if(!grupos[etiqueta]) grupos[etiqueta] = [];
-      grupos[etiqueta].push(item);
+  function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
+    return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
+  }
+
+  function actualizarCarrito() {
+    const lista = document.getElementById("lista-carrito");
+    const contador = document.getElementById("contador-carrito");
+    const botonFlotante = document.getElementById("boton-carrito");
+    lista.innerHTML = "";
+    let total = 0;
+
+    carrito.forEach(item => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
+        <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
+        <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>
+      `;
+      lista.appendChild(li);
+      total += item.subtotal;
     });
 
-    Object.keys(grupos).forEach(etiqueta => {
-      const acordeon = document.createElement("div");
-      acordeon.className = "acordeon";
+    const totalLi = document.createElement("li");
+    totalLi.style.fontWeight = "bold";
+    totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
+    lista.appendChild(totalLi);
 
-      const titulo = document.createElement("div");
-      titulo.className = "acordeon-titulo";
-      titulo.innerHTML = `${etiqueta} <span>+</span>`;
+    if (carrito.length > 0) {
+      botonFlotante.style.display = "flex";
+      contador.textContent = carrito.length;
+    } else {
+      botonFlotante.style.display = "none";
+    }
+  }
 
-      const contenido = document.createElement("div");
-      contenido.className = "acordeon-contenido";
+  document.getElementById("enviar-whatsapp").addEventListener("click", e => {
+    e.preventDefault();
+    let vendedor = window.vendedorGlobal || localStorage.getItem("vendedorWhatsApp") || "595986830888";
 
-      const grid = document.createElement("div");
-      grid.className = "grid";
+    const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
+    const mensaje = carrito.map(i => 
+      `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
+    ).join("%0A");
 
-      grupos[etiqueta].forEach(item => {
-        const nombre = (item["Nombre del producto"]||"").trim();
-        const detalle = (item["Detalle"]||"").trim();
-        const codigo = (item["Código"]||"").toString().trim();
-        const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
-        const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
-        const imagen = (item["Imagen"]||"").trim();
+    const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+    const link = `https://wa.me/${vendedor}?text=${texto}`;
+    window.open(link, "_blank");
+  });
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${imagen}" alt="${nombre}" loading="lazy" 
-            onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
-          <div class="info">
-            <h2>${nombre}</h2>
-            <p>${detalle}</p>
-            <p><strong>Código:</strong> ${codigo}</p>
-            <div class="prices">
-              <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
-              <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+  document.getElementById("boton-carrito").addEventListener("click", () => {
+    document.getElementById("mini-carrito").scrollIntoView({ behavior: "smooth" });
+  });
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("acordeones-container").style.display = "block";
+      const container = document.getElementById("acordeones-container");
+      const grupos = {};
+
+      data.forEach(item => {
+        const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
+        if(!grupos[etiqueta]) grupos[etiqueta] = [];
+        grupos[etiqueta].push(item);
+      });
+
+      Object.keys(grupos).forEach(etiqueta => {
+        const acordeon = document.createElement("div");
+        acordeon.className = "acordeon";
+        const titulo = document.createElement("div");
+        titulo.className = "acordeon-titulo";
+        titulo.innerHTML = `${etiqueta} <span>+</span>`;
+
+        const contenido = document.createElement("div");
+        contenido.className = "acordeon-contenido";
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        grupos[etiqueta].forEach(item => {
+          const nombre = (item["Nombre del producto"]||"").trim();
+          const detalle = (item["Detalle"]||"").trim();
+          const codigo = (item["Código"]||"").toString().trim();
+          const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
+          const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
+          const imagen = (item["Imagen"]||"").trim();
+
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img src="${imagen}" alt="${nombre}" loading="lazy"
+              onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
+            <div class="info">
+              <h2>${nombre}</h2>
+              <p>${detalle}</p>
+              <p><strong>Código:</strong> ${codigo}</p>
+              <div class="prices">
+                <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
+                <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+              </div>
             </div>
-          </div>
-          <div class="actions">
-            <input type="number" value="1" min="1" id="qty-${codigo}" />
-            <button class="btn">Agregar al carrito</button>
-          </div>
-        `;
+            <div class="actions">
+              <input type="number" value="1" min="1" id="qty-${codigo}" />
+              <button class="btn">Agregar al carrito</button>
+            </div>
+          `;
 
-        const qtyInput = card.querySelector(`#qty-${codigo}`);
-        const btn = card.querySelector(".btn");
+          const qtyInput = card.querySelector(`#qty-${codigo}`);
+          const btn = card.querySelector(".btn");
 
-        btn.addEventListener("click", e => {
-          e.preventDefault();
-          const qty = parseInt(qtyInput.value);
-          const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
-          const subtotal = precioUnitario * qty;
-          const existente = carrito.find(p => p.codigo === codigo);
-          if(existente){
-            existente.cantidad = qty;
-            existente.precioUnitario = precioUnitario;
-            existente.subtotal = subtotal;
-          } else {
-            carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal});
-          }
-          btn.textContent = "Agregado ✅";
-          btn.classList.add("agregado");
-          actualizarCarrito();
+          btn.addEventListener("click", e => {
+            e.preventDefault();
+            const qty = parseInt(qtyInput.value);
+            const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
+            const subtotal = precioUnitario * qty;
+            const existente = carrito.find(p => p.codigo === codigo);
+            if (existente) {
+              existente.cantidad = qty;
+              existente.precioUnitario = precioUnitario;
+              existente.subtotal = subtotal;
+            } else {
+              carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal});
+            }
+            btn.textContent = "Agregado ✅";
+            btn.classList.add("agregado");
+            actualizarCarrito();
+          });
+
+          grid.appendChild(card);
         });
 
-        grid.appendChild(card);
-      });
+        contenido.appendChild(grid);
+        acordeon.appendChild(titulo);
+        acordeon.appendChild(contenido);
+        container.appendChild(acordeon);
 
-      contenido.appendChild(grid);
-      acordeon.appendChild(titulo);
-      acordeon.appendChild(contenido);
-      container.appendChild(acordeon);
-
-      titulo.addEventListener("click", () => {
-        const visible = contenido.style.display === "block";
-        document.querySelectorAll(".acordeon-contenido").forEach(c => c.style.display = "none");
-        document.querySelectorAll(".acordeon-titulo span").forEach(s => s.textContent = "+");
-        if(!visible){
-          contenido.style.display = "block";
-          titulo.querySelector("span").textContent = "−";
-        }
+        titulo.addEventListener("click", () => {
+          const visible = contenido.style.display === "block";
+          document.querySelectorAll(".acordeon-contenido").forEach(c => c.style.display = "none");
+          document.querySelectorAll(".acordeon-titulo span").forEach(s => s.textContent = "+");
+          if (!visible) {
+            contenido.style.display = "block";
+            titulo.querySelector("span").textContent = "−";
+          }
+        });
       });
+    })
+    .catch(err => {
+      console.error("Error cargando productos:", err);
+      document.getElementById("loader-overlay").innerHTML = "<p>Error al cargar los productos 😢</p>";
     });
-  })
-  .catch(err => {
-    console.error("Error cargando productos:", err);
-    document.getElementById("loader-overlay").innerHTML = "<p>Error al cargar los productos 😢</p>";
-  });
+});
 </script>
 </body>
 </html>
