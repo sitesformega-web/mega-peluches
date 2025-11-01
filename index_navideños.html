@@ -200,14 +200,32 @@ function actualizarCarrito() {
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
 
-  // Releemos el número del vendedor por si fue actualizado recientemente
-  let vendedor = localStorage.getItem('vendedorWhatsApp');
-  if(!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined"){
-    vendedor = "595986830888"; // fallback
+// 🔹 Envío de pedido dinámico (revisión total)
+document.getElementById("enviar-whatsapp").addEventListener("click", e => {
+  e.preventDefault();
+
+  // 1️⃣ Intentar leer de la URL (por si el link viene con ?vendedor= o ?wa=)
+  const urlParams = new URLSearchParams(window.location.search);
+  let vendedor = urlParams.get("vendedor") || urlParams.get("wa");
+
+  // 2️⃣ Si vino algo válido en la URL, guardarlo en localStorage
+  if (vendedor && vendedor.trim() !== "") {
+    localStorage.setItem("vendedorWhatsApp", vendedor.trim());
   }
 
+  // 3️⃣ Si no hay nada nuevo, leer desde localStorage
+  if (!vendedor || vendedor.trim() === "") {
+    vendedor = localStorage.getItem("vendedorWhatsApp");
+  }
+
+  // 4️⃣ Si sigue sin haber número válido, usar fallback
+  if (!vendedor || vendedor.trim() === "" || vendedor === "null" || vendedor === "undefined") {
+    vendedor = "595986830888"; // número por defecto
+  }
+
+  // 5️⃣ Construir el mensaje y abrir WhatsApp
   const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
-  const mensaje = carrito.map(i => 
+  const mensaje = carrito.map(i =>
     `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
   ).join("%0A");
 
@@ -327,3 +345,4 @@ fetch(url)
 </script>
 </body>
 </html>
+
