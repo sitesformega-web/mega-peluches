@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Navideños</title>
 <style>
-/* --- estilos idénticos a los del original --- */
 body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
 h1 { text-align:center; margin-bottom:30px; }
 #loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9);
@@ -70,34 +69,52 @@ h1 { text-align:center; margin-bottom:30px; }
 <button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
 
 <script>
-// 🔹 1. Diccionario de vendedores
-const VENDEDORES = {
-  "joaquin": "595993527907",
-  "Camila%20Benitez": "595993527907",
-  "maria": "595981112233"
-};
+let VENDEDORES = {}; // diccionario dinámico
+let carrito = [];
 
-// 🔹 2. Detectar el vendedor desde la URL
+// URL de productos
+const urlProductos = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
+
+// URL del Google Sheet de vendedores
+const urlVendedores = "https://script.google.com/macros/s/AKfycbwFlH1bAuXVmB1u5eerbQHSVxHgC1VbsYzWmU4r5dKNyxJAbCAKRJSF_w3rFZ3DJtlDdQ/exec";
+
+// 🔹 Cargar vendedores dinámicamente
+async function cargarVendedores() {
+  try {
+    const res = await fetch(urlVendedores);
+    const data = await res.json();
+    const hojaVendedores = data.find(s => s.nombreHoja?.toLowerCase() === "vendedores");
+    if(hojaVendedores && hojaVendedores.datos){
+      hojaVendedores.datos.forEach(v => {
+        if(v.nombre && v.whatsapp){
+          VENDEDORES[encodeURIComponent(v.nombre.toLowerCase().trim())] = v.whatsapp.toString().replace(/\s+/g,'');
+        }
+      });
+    }
+  } catch(err){
+    console.error("Error cargando vendedores:", err);
+  }
+}
+
+// 🔹 Detectar el vendedor desde la URL
 function obtenerVendedor() {
   const urlParams = new URLSearchParams(window.location.search);
   const vendedorParam = urlParams.get("vendedor");
-  if (vendedorParam && VENDEDORES[vendedorParam.toLowerCase()]) {
-    return VENDEDORES[vendedorParam.toLowerCase()];
+  if(vendedorParam){
+    const key = encodeURIComponent(vendedorParam.toLowerCase().trim());
+    if(VENDEDORES[key]){
+      return VENDEDORES[key];
+    }
   }
   return "595986830888"; // fallback
 }
 
-const url = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
-let carrito = [];
-
-// Mostrar loader
-document.getElementById("loader-overlay").style.display = "flex";
-document.getElementById("acordeones-container").style.display = "none";
-
+// 🔹 Función para obtener precio
 function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
   return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
 }
 
+// 🔹 Actualizar carrito
 function actualizarCarrito() {
   const lista = document.getElementById("lista-carrito");
   const contador = document.getElementById("contador-carrito");
@@ -125,117 +142,117 @@ function actualizarCarrito() {
   }
 }
 
-// 🔹 3. Enviar pedido según el vendedor detectado
+// 🔹 Enviar pedido por WhatsApp
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   const vendedor = obtenerVendedor();
-  const total = carrito.reduce((acc, i) => acc + i.subtotal, 0);
-  const mensaje = carrito.map(i =>
-    `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`
-  ).join("%0A");
+  const total = carrito.reduce((acc,i)=>acc+i.subtotal,0);
+  const mensaje = carrito.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
   const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
   const link = `https://wa.me/${vendedor}?text=${texto}`;
-  window.open(link, "_blank");
+  window.open(link,"_blank");
 });
 
 // 🔹 Botón flotante
-document.getElementById("boton-carrito").addEventListener("click", () => {
-  document.getElementById("mini-carrito").scrollIntoView({ behavior: "smooth" });
+document.getElementById("boton-carrito").addEventListener("click",()=>{
+  document.getElementById("mini-carrito").scrollIntoView({behavior:"smooth"});
 });
 
-// 🔹 Cargar productos
-fetch(url)
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("loader-overlay").style.display = "none";
-    document.getElementById("acordeones-container").style.display = "block";
-    const container = document.getElementById("acordeones-container");
-    const grupos = {};
-    data.forEach(item => {
-      const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
-      if(!grupos[etiqueta]) grupos[etiqueta] = [];
-      grupos[etiqueta].push(item);
-    });
+// 🔹 Cargar vendedores y productos
+(async function(){
+  await cargarVendedores();
 
-    Object.keys(grupos).forEach(etiqueta => {
-      const acordeon = document.createElement("div");
-      acordeon.className = "acordeon";
-      const titulo = document.createElement("div");
-      titulo.className = "acordeon-titulo";
-      titulo.innerHTML = `${etiqueta} <span>+</span>`;
-      const contenido = document.createElement("div");
-      contenido.className = "acordeon-contenido";
-      const grid = document.createElement("div");
-      grid.className = "grid";
+  fetch(urlProductos)
+    .then(res=>res.json())
+    .then(data=>{
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("acordeones-container").style.display = "block";
+      const container = document.getElementById("acordeones-container");
+      const grupos = {};
+      data.forEach(item=>{
+        const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
+        if(!grupos[etiqueta]) grupos[etiqueta] = [];
+        grupos[etiqueta].push(item);
+      });
 
-      grupos[etiqueta].forEach(item => {
-        const nombre = (item["Nombre del producto"]||"").trim();
-        const detalle = (item["Detalle"]||"").trim();
-        const codigo = (item["Código"]||"").toString().trim();
-        const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
-        const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
-        const imagen = (item["Imagen"]||"").trim();
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${imagen}" alt="${nombre}" loading="lazy"
-          onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
-          <div class="info">
-            <h2>${nombre}</h2>
-            <p>${detalle}</p>
-            <p><strong>Código:</strong> ${codigo}</p>
-            <div class="prices">
-              <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
-              <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+      Object.keys(grupos).forEach(etiqueta=>{
+        const acordeon = document.createElement("div");
+        acordeon.className = "acordeon";
+        const titulo = document.createElement("div");
+        titulo.className = "acordeon-titulo";
+        titulo.innerHTML = `${etiqueta} <span>+</span>`;
+        const contenido = document.createElement("div");
+        contenido.className = "acordeon-contenido";
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        grupos[etiqueta].forEach(item=>{
+          const nombre = (item["Nombre del producto"]||"").trim();
+          const detalle = (item["Detalle"]||"").trim();
+          const codigo = (item["Código"]||"").toString().trim();
+          const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
+          const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
+          const imagen = (item["Imagen"]||"").trim();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img src="${imagen}" alt="${nombre}" loading="lazy"
+            onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
+            <div class="info">
+              <h2>${nombre}</h2>
+              <p>${detalle}</p>
+              <p><strong>Código:</strong> ${codigo}</p>
+              <div class="prices">
+                <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
+                <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+              </div>
             </div>
-          </div>
-          <div class="actions">
-            <input type="number" value="1" min="1" id="qty-${codigo}" />
-            <button class="btn">Agregar al carrito</button>
-          </div>`;
-        const qtyInput = card.querySelector(`#qty-${codigo}`);
-        const btn = card.querySelector(".btn");
-        btn.addEventListener("click", e => {
-          e.preventDefault();
-          const qty = parseInt(qtyInput.value);
-          const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
-          const subtotal = precioUnitario * qty;
-          const existente = carrito.find(p => p.codigo === codigo);
-          if(existente){
-            existente.cantidad = qty;
-            existente.precioUnitario = precioUnitario;
-            existente.subtotal = subtotal;
-          } else {
-            carrito.push({nombre, codigo, cantidad: qty, precioUnitario, subtotal});
-          }
-          btn.textContent = "Agregado ✅";
-          btn.classList.add("agregado");
-          actualizarCarrito();
+            <div class="actions">
+              <input type="number" value="1" min="1" id="qty-${codigo}" />
+              <button class="btn">Agregar al carrito</button>
+            </div>`;
+          const qtyInput = card.querySelector(`#qty-${codigo}`);
+          const btn = card.querySelector(".btn");
+          btn.addEventListener("click", e=>{
+            e.preventDefault();
+            const qty = parseInt(qtyInput.value);
+            const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
+            const subtotal = precioUnitario * qty;
+            const existente = carrito.find(p=>p.codigo===codigo);
+            if(existente){
+              existente.cantidad = qty;
+              existente.precioUnitario = precioUnitario;
+              existente.subtotal = subtotal;
+            } else {
+              carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal});
+            }
+            btn.textContent = "Agregado ✅";
+            btn.classList.add("agregado");
+            actualizarCarrito();
+          });
+          grid.appendChild(card);
         });
-        grid.appendChild(card);
-      });
 
-      contenido.appendChild(grid);
-      acordeon.appendChild(titulo);
-      acordeon.appendChild(contenido);
-      container.appendChild(acordeon);
-      titulo.addEventListener("click", () => {
-        const visible = contenido.style.display === "block";
-        document.querySelectorAll(".acordeon-contenido").forEach(c => c.style.display = "none");
-        document.querySelectorAll(".acordeon-titulo span").forEach(s => s.textContent = "+");
-        if(!visible){
-          contenido.style.display = "block";
-          titulo.querySelector("span").textContent = "−";
-        }
+        contenido.appendChild(grid);
+        acordeon.appendChild(titulo);
+        acordeon.appendChild(contenido);
+        container.appendChild(acordeon);
+        titulo.addEventListener("click",()=>{
+          const visible = contenido.style.display==="block";
+          document.querySelectorAll(".acordeon-contenido").forEach(c=>c.style.display="none");
+          document.querySelectorAll(".acordeon-titulo span").forEach(s=>s.textContent="+");
+          if(!visible){
+            contenido.style.display="block";
+            titulo.querySelector("span").textContent="−";
+          }
+        });
       });
+    })
+    .catch(err=>{
+      console.error("Error cargando productos:", err);
+      document.getElementById("loader-overlay").innerHTML="<p>Error al cargar los productos 😢</p>";
     });
-  })
-  .catch(err => {
-    console.error("Error cargando productos:", err);
-    document.getElementById("loader-overlay").innerHTML = "<p>Error al cargar los productos 😢</p>";
-  });
+})();
 </script>
 </body>
 </html>
-
-
