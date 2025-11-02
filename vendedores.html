@@ -35,6 +35,7 @@
 <script>
 const apiUrl = 'https://script.google.com/macros/s/AKfycbwFlH1bAuXVmB1u5eerbQHSVxHgC1VbsYzWmU4r5dKNyxJAbCAKRJSF_w3rFZ3DJtlDdQ/exec';
 const baseUrl = 'https://sites.google.com/view/megashop-lista';
+let vendedoresMap = {}; // nombre → whatsapp
 
 // 🔹 Cargar vendedores y categorías
 async function cargarDatos() {
@@ -52,12 +53,18 @@ async function cargarDatos() {
     if (hojaVendedores && hojaVendedores.datos) {
       hojaVendedores.datos.forEach(v => {
         if (v.nombre && v.whatsapp) {
+          const cleanNumber = v.whatsapp.toString().replace(/\s+/g,'');
+          vendedoresMap[v.nombre] = cleanNumber;
+
           const option = document.createElement('option');
-          option.value = v.whatsapp.toString().replace(/\s+/g,'');
+          option.value = v.nombre;
           option.textContent = v.nombre;
           vendedorSelect.appendChild(option);
         }
       });
+
+      // Guardamos el mapa localmente
+      localStorage.setItem('vendedoresMap', JSON.stringify(vendedoresMap));
     }
 
     // Cargar categorías
@@ -74,7 +81,7 @@ async function cargarDatos() {
   }
 }
 
-// 🔹 Generar link con categoría en minúscula y WhatsApp del vendedor
+// 🔹 Generar link con nombre del vendedor (no número)
 function generarLink() {
   const categoria = document.getElementById('categoria').value;
   const vendedor = document.getElementById('vendedor').value;
@@ -84,7 +91,10 @@ function generarLink() {
     return;
   }
 
-  const link = `${baseUrl}/${encodeURIComponent(categoria.toLowerCase())}?wa=${vendedor}`;
+  // Guardamos el vendedor actual
+  localStorage.setItem('vendedorSeleccionado', vendedor);
+
+  const link = `${baseUrl}/${encodeURIComponent(categoria.toLowerCase())}?vendedor=${encodeURIComponent(vendedor)}`;
 
   const resultado = document.getElementById('resultado');
   const copyBtn = document.getElementById('copyBtn');
