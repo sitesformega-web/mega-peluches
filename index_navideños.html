@@ -143,13 +143,27 @@ function actualizarCarrito() {
 }
 
 // 🔹 Enviar pedido por WhatsApp
-document.getElementById("enviar-whatsapp").addEventListener("click", e => {
+document.getElementById("enviar-whatsapp").addEventListener("click", async e => {
   e.preventDefault();
-  const vendedor = obtenerVendedor();
+
+  // Asegurarse de que los vendedores estén cargados
+  if (Object.keys(VENDEDORES).length === 0) {
+    await cargarVendedores();
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const vendedorParam = urlParams.get("vendedor");
+  let vendedorTelefono = "595986830888"; // fallback
+
+  if (vendedorParam) {
+    const key = encodeURIComponent(vendedorParam.toLowerCase().trim());
+    if (VENDEDORES[key]) vendedorTelefono = VENDEDORES[key];
+  }
+
   const total = carrito.reduce((acc,i)=>acc+i.subtotal,0);
   const mensaje = carrito.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
   const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
-  const link = `https://wa.me/${vendedor}?text=${texto}`;
+  const link = `https://wa.me/${vendedorTelefono}?text=${texto}`;
   window.open(link,"_blank");
 });
 
@@ -256,6 +270,3 @@ document.getElementById("boton-carrito").addEventListener("click",()=>{
 </script>
 </body>
 </html>
-
-
-
