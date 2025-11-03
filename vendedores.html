@@ -40,7 +40,7 @@ let vendedoresMap = {}; // nombre → whatsapp
 // 🔹 Cargar vendedores y categorías
 async function cargarDatos() {
   try {
-    const res = await fetch(`${apiUrl}`);
+    const res = await fetch(apiUrl);
     const data = await res.json();
 
     const vendedorSelect = document.getElementById('vendedor');
@@ -54,7 +54,8 @@ async function cargarDatos() {
       hojaVendedores.datos.forEach(v => {
         if (v.nombre && v.whatsapp) {
           const cleanNumber = v.whatsapp.toString().replace(/\s+/g,'');
-          vendedoresMap[v.nombre] = cleanNumber;
+          // clave normalizada a minúsculas para evitar errores de encoding
+          vendedoresMap[v.nombre.toLowerCase().trim()] = cleanNumber;
 
           const option = document.createElement('option');
           option.value = v.nombre;
@@ -62,9 +63,6 @@ async function cargarDatos() {
           vendedorSelect.appendChild(option);
         }
       });
-
-      // Guardamos el mapa localmente
-      localStorage.setItem('vendedoresMap', JSON.stringify(vendedoresMap));
     }
 
     // Cargar categorías
@@ -81,7 +79,7 @@ async function cargarDatos() {
   }
 }
 
-// 🔹 Generar link con nombre del vendedor (no número)
+// 🔹 Generar link con vendedor
 function generarLink() {
   const categoria = document.getElementById('categoria').value;
   const vendedor = document.getElementById('vendedor').value;
@@ -91,9 +89,10 @@ function generarLink() {
     return;
   }
 
-  // Guardamos el vendedor actual
+  // Guardamos el vendedor seleccionado en localStorage
   localStorage.setItem('vendedorSeleccionado', vendedor);
 
+  // Generamos el enlace con encodeURIComponent solo para la URL
   const link = `${baseUrl}/${encodeURIComponent(categoria.toLowerCase())}?vendedor=${encodeURIComponent(vendedor)}`;
 
   const resultado = document.getElementById('resultado');
@@ -111,8 +110,8 @@ function copiarLink() {
   alert("✅ Enlace copiado al portapapeles");
 }
 
+// Inicializamos
 cargarDatos();
 </script>
 </body>
 </html>
-
