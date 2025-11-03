@@ -147,8 +147,8 @@ document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   const vendedor = obtenerVendedor();
   const total = carrito.reduce((acc,i)=>acc+i.subtotal,0);
-  const mensaje = carrito.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
-  const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+  const mensaje = carrito.map(i=>`${i.nombre} (cód:${i.codigo}) - Categoría: ${i.categoria} - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
+  const texto = `Hola! Quiero:%0A${mensaje}%0A%0ATotal: Gs. ${total.toLocaleString()}`;
   const link = `https://wa.me/${vendedor}?text=${texto}`;
   window.open(link,"_blank");
 });
@@ -224,7 +224,7 @@ document.getElementById("boton-carrito").addEventListener("click",()=>{
               existente.precioUnitario = precioUnitario;
               existente.subtotal = subtotal;
             } else {
-              carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal});
+              carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal,categoria:etiqueta});
             }
             btn.textContent = "Agregado ✅";
             btn.classList.add("agregado");
@@ -255,5 +255,4 @@ document.getElementById("boton-carrito").addEventListener("click",()=>{
 })();
 </script>
 </body>
-
 </html>
