@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Navideños</title>
 <style>
+/* ... (MANTENER TODOS TUS ESTILOS CSS AQUÍ, SIN CAMBIOS) ... */
 body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
 h1 { text-align:center; margin-bottom:30px; }
 #loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9);
@@ -76,11 +77,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const vendedorParam = urlParams.get('vendedor');
 
 
-// ⚠️ IMPORTANTE: URL de productos (usá tu URL ejecutable aquí)
-let urlProductos = "https://script.google.com/macros/s/AKfycbyg_DkwhtXCWzV1n7mdTXWvTMQWK2Kuci75RlTPvAOhhQptIRWp-D0PxC5DUrbon2tRSg/exec?sheet=Navideños";
+// ⚠️ IMPORTANTE: URL de productos (ACTUALIZA ESTA URL con tu nuevo /exec si lo desplegaste)
+let urlProductos = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
-// 💡 MODIFICACIÓN 2: Modificar la URL solo si el Apps Script lo requiere para el vendedor.
-// Ya que Apps Script necesita saber el vendedor para devolver el número de WhatsApp.
+// 💡 MODIFICACIÓN 2: Agregar el parámetro vendedor.
 if (vendedorParam) {
     urlProductos += `&vendedor=${encodeURIComponent(vendedorParam)}`;
 }
@@ -124,8 +124,7 @@ document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   if(carrito.length === 0) return alert("El carrito está vacío");
 
-  // 💡 MODIFICACIÓN 3: USAR EL VENDEDOR ASIGNADO.
-  // Eliminamos la lógica de agrupar por producto/vendedor y usamos el asignado por Apps Script.
+  // 💡 Usa el Vendedor Asignado.
   const vendedorFinal = whatsappVendedorAsignado; 
 
   const items = carrito;
@@ -142,20 +141,18 @@ document.getElementById("boton-carrito").addEventListener("click",()=>{
   document.getElementById("mini-carrito").scrollIntoView({behavior:"smooth"});
 });
 
-// 🔹 Cargar productos
+// 🔹 Cargar productos (AJUSTE CRÍTICO AL NUEVO FORMATO JSON)
 fetch(urlProductos)
   .then(res=>res.json())
   .then(data=>{
-    // 💡 MODIFICACIÓN 4: Capturar el número de WhatsApp si Apps Script lo devolvió.
-    // Esto funciona si Apps Script devuelve {productos: [...], telefonoVendedor: "..."}
-    // Si Apps Script devuelve solo el array de productos, esta línea se ignorará.
+    // 💡 AJUSTE CRÍTICO: Capturar el número de WhatsApp y los productos del objeto JSON.
     if (data.telefonoVendedor) {
       whatsappVendedorAsignado = data.telefonoVendedor;
+      console.log("Número de Vendedor Asignado:", whatsappVendedorAsignado); // Log para debug
     }
     
-    // Si la data es un ARRAY (como en tu código original), la usamos directamente.
-    // Si la data es un OBJETO con una clave 'productos', usamos esa clave (ej: data.productos).
-    const productos = Array.isArray(data) ? data : data.productos || [];
+    // Usar la clave 'productos' que devuelve el Apps Script
+    const productos = data.productos || [];
 
     document.getElementById("loader-overlay").style.display = "none";
     document.getElementById("acordeones-container").style.display = "block";
@@ -167,6 +164,8 @@ fetch(urlProductos)
       if(!grupos[etiqueta]) grupos[etiqueta] = [];
       grupos[etiqueta].push(item);
     });
+
+// ... (El resto del código de renderizado continúa igual) ...
 
     Object.keys(grupos).forEach(etiqueta=>{
       const acordeon = document.createElement("div");
@@ -186,8 +185,6 @@ fetch(urlProductos)
         const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
         const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
         const imagen = (item["Imagen"]||"").trim();
-        // Quitamos la variable 'whatsapp' del producto, ya que no la necesitamos.
-        // const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim(); 
         
         const card = document.createElement("div");
         card.className = "card";
@@ -214,14 +211,12 @@ fetch(urlProductos)
           const qty = parseInt(qtyInput.value);
           const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
           const subtotal = precioUnitario * qty;
-          // Ya no verificamos el 'whatsapp', solo el código.
           const existente = carrito.find(p=>p.codigo===codigo);
           if(existente){
             existente.cantidad = qty;
             existente.precioUnitario = precioUnitario;
             existente.subtotal = subtotal;
           } else {
-            // Ya no guardamos el whatsapp por producto
             carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal});
           }
           btn.textContent = "Agregado ✅";
@@ -253,4 +248,3 @@ fetch(urlProductos)
 </script>
 </body>
 </html>
-
