@@ -8,7 +8,7 @@
 body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
 h1 { text-align:center; margin-bottom:30px; }
 #loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000; color:#293073; font-size:18px; font-weight:bold; }
+  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000; color:#293073; font-size:18px; font-weight:bold; }
 #loader-overlay .punto { width:25px; height:25px; background:#293073; border-radius:50%; margin-bottom:15px; animation:pulso 1s infinite ease-in-out; }
 @keyframes pulso { 0%,100%{transform:scale(1);opacity:0.6;} 50%{transform:scale(1.6);opacity:1;} }
 .acordeon { margin-bottom:20px; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.15); }
@@ -35,18 +35,18 @@ h1 { text-align:center; margin-bottom:30px; }
 .eliminar-btn:hover { background:#e60000; }
 #enviar-whatsapp { display:block; margin-top:15px; text-align:center; }
 #boton-carrito { position:fixed; bottom:20px; right:20px; background:#25d366; color:white; border:none; border-radius:50px;
-  padding:12px 20px; font-size:16px; box-shadow:0 4px 10px rgba(0,0,0,0.25); cursor:pointer; z-index:1000; display:none; }
+  padding:12px 20px; font-size:16px; box-shadow:0 4px 10px rgba(0,0,0,0.25); cursor:pointer; z-index:1000; display:none; }
 #boton-carrito:hover { background:#1ebe5d; }
 #contador-carrito { background:#ff3b3b; border-radius:50%; padding:2px 8px; font-size:12px; margin-left:8px; }
 @media(max-width:1200px){.grid{grid-template-columns:repeat(3,1fr);} }
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);} }
 @media(max-width:600px){
-  .grid{grid-template-columns:1fr;}
-  #mini-carrito li{flex-direction:column;align-items:flex-start;}
-  #mini-carrito li input{margin-left:0;margin-top:5px;}
-  .eliminar-btn{margin-left:0;margin-top:5px;}
-  #enviar-whatsapp{width:100%;}
-  #boton-carrito{padding:10px 16px;font-size:14px;bottom:15px;right:15px;}
+  .grid{grid-template-columns:1fr;}
+  #mini-carrito li{flex-direction:column;align-items:flex-start;}
+  #mini-carrito li input{margin-left:0;margin-top:5px;}
+  .eliminar-btn{margin-left:0;margin-top:5px;}
+  #enviar-whatsapp{width:100%;}
+  #boton-carrito{padding:10px 16px;font-size:14px;bottom:15px;right:15px;}
 }
 </style>
 </head>
@@ -54,180 +54,202 @@ h1 { text-align:center; margin-bottom:30px; }
 <h1>Navideños</h1>
 
 <div id="loader-overlay">
-  <div class="punto"></div>
-  <p>Cargando contenido...</p>
+  <div class="punto"></div>
+  <p>Cargando contenido...</p>
 </div>
 
 <div id="acordeones-container"></div>
 
 <div id="mini-carrito">
-  <h2>Tu carrito</h2>
-  <ul id="lista-carrito"></ul>
-  <a id="enviar-whatsapp" class="btn" target="_blank">Enviar pedido por WhatsApp</a>
+  <h2>Tu carrito</h2>
+  <ul id="lista-carrito"></ul>
+  <a id="enviar-whatsapp" class="btn" target="_blank">Enviar pedido por WhatsApp</a>
 </div>
 
 <button id="boton-carrito">🛒 Ver carrito <span id="contador-carrito">0</span></button>
 
 <script>
 let carrito = [];
+// 💡 MODIFICACIÓN 1: Variables para el Vendedor.
+let whatsappVendedorAsignado = "595986830888"; // Número por defecto
+const urlParams = new URLSearchParams(window.location.search);
+const vendedorParam = urlParams.get('vendedor');
 
-// URL de productos
-const urlProductos = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
 
-// 🔹 Función para obtener precio
+// ⚠️ IMPORTANTE: URL de productos (usá tu URL ejecutable aquí)
+let urlProductos = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
+
+// 💡 MODIFICACIÓN 2: Modificar la URL solo si el Apps Script lo requiere para el vendedor.
+// Ya que Apps Script necesita saber el vendedor para devolver el número de WhatsApp.
+if (vendedorParam) {
+    urlProductos += `&vendedor=${encodeURIComponent(vendedorParam)}`;
+}
+
+
+// 🔹 Función para obtener precio (SIN CAMBIOS)
 function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
-  return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
+  return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
 }
 
-// 🔹 Actualizar carrito
+// 🔹 Actualizar carrito (SIN CAMBIOS)
 function actualizarCarrito() {
-  const lista = document.getElementById("lista-carrito");
-  const contador = document.getElementById("contador-carrito");
-  const botonFlotante = document.getElementById("boton-carrito");
-  lista.innerHTML = "";
-  let total = 0;
-  carrito.forEach(item => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
-      <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
-      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>`;
-    lista.appendChild(li);
-    total += item.subtotal;
-  });
-  const totalLi = document.createElement("li");
-  totalLi.style.fontWeight = "bold";
-  totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
-  lista.appendChild(totalLi);
-  if(carrito.length > 0){
-    botonFlotante.style.display = "flex";
-    contador.textContent = carrito.length;
-  } else {
-    botonFlotante.style.display = "none";
-  }
+  const lista = document.getElementById("lista-carrito");
+  const contador = document.getElementById("contador-carrito");
+  const botonFlotante = document.getElementById("boton-carrito");
+  lista.innerHTML = "";
+  let total = 0;
+  carrito.forEach(item => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
+      <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
+      <button class="eliminar-btn" data-codigo="${item.codigo}">Eliminar</button>`;
+    lista.appendChild(li);
+    total += item.subtotal;
+  });
+  const totalLi = document.createElement("li");
+  totalLi.style.fontWeight = "bold";
+  totalLi.textContent = `Total: Gs. ${total.toLocaleString()}`;
+  lista.appendChild(totalLi);
+  if(carrito.length > 0){
+    botonFlotante.style.display = "flex";
+    contador.textContent = carrito.length;
+  } else {
+    botonFlotante.style.display = "none";
+  }
 }
 
-// 🔹 Enviar pedido por WhatsApp (usando WhatsApp de cada producto)
+// 🔹 Enviar pedido por WhatsApp (Lógica simplificada para UN solo vendedor)
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
-  e.preventDefault();
-  if(carrito.length === 0) return alert("El carrito está vacío");
+  e.preventDefault();
+  if(carrito.length === 0) return alert("El carrito está vacío");
 
-  // Agrupar productos por vendedor
-  const pedidosPorVendedor = {};
-  carrito.forEach(item => {
-    const vendedor = item.whatsapp || "595986830888"; // fallback
-    if(!pedidosPorVendedor[vendedor]) pedidosPorVendedor[vendedor] = [];
-    pedidosPorVendedor[vendedor].push(item);
-  });
+  // 💡 MODIFICACIÓN 3: USAR EL VENDEDOR ASIGNADO.
+  // Eliminamos la lógica de agrupar por producto/vendedor y usamos el asignado por Apps Script.
+  const vendedorFinal = whatsappVendedorAsignado; 
 
-  // Abrir un WhatsApp por cada vendedor
-  Object.keys(pedidosPorVendedor).forEach(vendedor => {
-    const items = pedidosPorVendedor[vendedor];
-    const mensaje = items.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
-    const total = items.reduce((acc,i)=>acc+i.subtotal,0);
-    const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
-    const link = `https://wa.me/${vendedor}?text=${texto}`;
-    window.open(link,"_blank");
-  });
+  const items = carrito;
+  const mensaje = items.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
+  const total = items.reduce((acc,i)=>acc+i.subtotal,0);
+  const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+  
+  const link = `https://wa.me/${vendedorFinal}?text=${texto}`;
+  window.open(link,"_blank");
 });
 
-// 🔹 Botón flotante
+// 🔹 Botón flotante (SIN CAMBIOS)
 document.getElementById("boton-carrito").addEventListener("click",()=>{
-  document.getElementById("mini-carrito").scrollIntoView({behavior:"smooth"});
+  document.getElementById("mini-carrito").scrollIntoView({behavior:"smooth"});
 });
 
 // 🔹 Cargar productos
 fetch(urlProductos)
-  .then(res=>res.json())
-  .then(data=>{
-    document.getElementById("loader-overlay").style.display = "none";
-    document.getElementById("acordeones-container").style.display = "block";
-    const container = document.getElementById("acordeones-container");
-    const grupos = {};
-    data.forEach(item=>{
-      const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
-      if(!grupos[etiqueta]) grupos[etiqueta] = [];
-      grupos[etiqueta].push(item);
-    });
+  .then(res=>res.json())
+  .then(data=>{
+    // 💡 MODIFICACIÓN 4: Capturar el número de WhatsApp si Apps Script lo devolvió.
+    // Esto funciona si Apps Script devuelve {productos: [...], telefonoVendedor: "..."}
+    // Si Apps Script devuelve solo el array de productos, esta línea se ignorará.
+    if (data.telefonoVendedor) {
+      whatsappVendedorAsignado = data.telefonoVendedor;
+    }
+    
+    // Si la data es un ARRAY (como en tu código original), la usamos directamente.
+    // Si la data es un OBJETO con una clave 'productos', usamos esa clave (ej: data.productos).
+    const productos = Array.isArray(data) ? data : data.productos || [];
 
-    Object.keys(grupos).forEach(etiqueta=>{
-      const acordeon = document.createElement("div");
-      acordeon.className = "acordeon";
-      const titulo = document.createElement("div");
-      titulo.className = "acordeon-titulo";
-      titulo.innerHTML = `${etiqueta} <span>+</span>`;
-      const contenido = document.createElement("div");
-      contenido.className = "acordeon-contenido";
-      const grid = document.createElement("div");
-      grid.className = "grid";
+    document.getElementById("loader-overlay").style.display = "none";
+    document.getElementById("acordeones-container").style.display = "block";
+    const container = document.getElementById("acordeones-container");
+    
+    const grupos = {};
+    productos.forEach(item=>{
+      const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
+      if(!grupos[etiqueta]) grupos[etiqueta] = [];
+      grupos[etiqueta].push(item);
+    });
 
-      grupos[etiqueta].forEach(item=>{
-        const nombre = (item["Nombre del producto"]||"").trim();
-        const detalle = (item["Detalle"]||"").trim();
-        const codigo = (item["Código"]||"").toString().trim();
-        const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
-        const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
-        const imagen = (item["Imagen"]||"").trim();
-        const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim(); // cada producto su vendedor
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${imagen}" alt="${nombre}" loading="lazy"
-          onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
-          <div class="info">
-            <h2>${nombre}</h2>
-            <p>${detalle}</p>
-            <p><strong>Código:</strong> ${codigo}</p>
-            <div class="prices">
-              <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
-              <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
-            </div>
-          </div>
-          <div class="actions">
-            <input type="number" value="1" min="1" id="qty-${codigo}" />
-            <button class="btn">Agregar al carrito</button>
-          </div>`;
-        const qtyInput = card.querySelector(`#qty-${codigo}`);
-        const btn = card.querySelector(".btn");
-        btn.addEventListener("click", e=>{
-          e.preventDefault();
-          const qty = parseInt(qtyInput.value);
-          const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
-          const subtotal = precioUnitario * qty;
-          const existente = carrito.find(p=>p.codigo===codigo && p.whatsapp===whatsapp);
-          if(existente){
-            existente.cantidad = qty;
-            existente.precioUnitario = precioUnitario;
-            existente.subtotal = subtotal;
-          } else {
-            carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal,whatsapp});
-          }
-          btn.textContent = "Agregado ✅";
-          btn.classList.add("agregado");
-          actualizarCarrito();
-        });
-        grid.appendChild(card);
-      });
+    Object.keys(grupos).forEach(etiqueta=>{
+      const acordeon = document.createElement("div");
+      acordeon.className = "acordeon";
+      const titulo = document.createElement("div");
+      titulo.className = "acordeon-titulo";
+      titulo.innerHTML = `${etiqueta} <span>+</span>`;
+      const contenido = document.createElement("div");
+      contenido.className = "acordeon-contenido";
+      const grid = document.createElement("div");
+      grid.className = "grid";
 
-      contenido.appendChild(grid);
-      acordeon.appendChild(titulo);
-      acordeon.appendChild(contenido);
-      container.appendChild(acordeon);
-      titulo.addEventListener("click",()=>{
-        const visible = contenido.style.display==="block";
-        document.querySelectorAll(".acordeon-contenido").forEach(c=>c.style.display="none");
-        document.querySelectorAll(".acordeon-titulo span").forEach(s=>s.textContent="+");
-        if(!visible){
-          contenido.style.display="block";
-          titulo.querySelector("span").textContent="−";
-        }
-      });
-    });
-  })
-  .catch(err=>{
-    console.error("Error cargando productos:", err);
-    document.getElementById("loader-overlay").innerHTML="<p>Error al cargar los productos 😢</p>";
-  });
+      grupos[etiqueta].forEach(item=>{
+        const nombre = (item["Nombre del producto"]||"").trim();
+        const detalle = (item["Detalle"]||"").trim();
+        const codigo = (item["Código"]||"").toString().trim();
+        const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
+        const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
+        const imagen = (item["Imagen"]||"").trim();
+        // Quitamos la variable 'whatsapp' del producto, ya que no la necesitamos.
+        // const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim(); 
+        
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${imagen}" alt="${nombre}" loading="lazy"
+          onerror="this.src='https://via.placeholder.com/250x200?text=Sin+imagen'" />
+          <div class="info">
+            <h2>${nombre}</h2>
+            <p>${detalle}</p>
+            <p><strong>Código:</strong> ${codigo}</p>
+            <div class="prices">
+              <strong>Minorista:</strong> Gs. ${precioMinorista}<br>
+              <strong>Mayorista:</strong> Gs. ${precioMayorista} (6+ unidades)
+            </div>
+          </div>
+          <div class="actions">
+            <input type="number" value="1" min="1" id="qty-${codigo}" />
+            <button class="btn">Agregar al carrito</button>
+          </div>`;
+        const qtyInput = card.querySelector(`#qty-${codigo}`);
+        const btn = card.querySelector(".btn");
+        btn.addEventListener("click", e=>{
+          e.preventDefault();
+          const qty = parseInt(qtyInput.value);
+          const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
+          const subtotal = precioUnitario * qty;
+          // Ya no verificamos el 'whatsapp', solo el código.
+          const existente = carrito.find(p=>p.codigo===codigo);
+          if(existente){
+            existente.cantidad = qty;
+            existente.precioUnitario = precioUnitario;
+            existente.subtotal = subtotal;
+          } else {
+            // Ya no guardamos el whatsapp por producto
+            carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal});
+          }
+          btn.textContent = "Agregado ✅";
+          btn.classList.add("agregado");
+          actualizarCarrito();
+        });
+        grid.appendChild(card);
+      });
+
+      contenido.appendChild(grid);
+      acordeon.appendChild(titulo);
+      acordeon.appendChild(contenido);
+      container.appendChild(acordeon);
+      titulo.addEventListener("click",()=>{
+        const visible = contenido.style.display==="block";
+        document.querySelectorAll(".acordeon-contenido").forEach(c=>c.style.display="none");
+        document.querySelectorAll(".acordeon-titulo span").forEach(s=>s.textContent="+");
+        if(!visible){
+          contenido.style.display="block";
+          titulo.querySelector("span").textContent="−";
+        }
+      });
+    });
+  })
+  .catch(err=>{
+    console.error("Error cargando productos:", err);
+    document.getElementById("loader-overlay").innerHTML="<p>Error al cargar los productos 😢</p>";
+  });
 </script>
 </body>
 </html>
