@@ -70,12 +70,14 @@ h1 { text-align:center; margin-bottom:30px; }
 
 <script>
 let carrito = [];
-// 💡 MODIFICACIÓN 1: Establecer el número por defecto y buscar el parámetro de URL.
+
+// 💡 MODIFICACIÓN 1: Variables globales y lectura del parámetro 'vendedor' de la URL.
 let whatsappVendedorAsignado = "595986830888"; // Número por defecto/fallback
 const urlParams = new URLSearchParams(window.location.search);
 const vendedorParam = urlParams.get('vendedor');
 
-// URL de productos (con el ID de tu Apps Script)
+// URL de productos (usá tu URL ejecutable aquí)
+// ⚠️ REEMPLAZA ESTA URL CON TU NUEVO EXEC:
 let urlProductos = "https://script.google.com/macros/s/AKfycbxrpqH6Nzs-0Kkb-VUXOvrWaogYYpF_oR8JCywKPAcTSreeZ6kFeqh93Bz18b19YmcG0Q/exec?sheet=Navideños";
 
 // 💡 MODIFICACIÓN 2: Añadir el parámetro del vendedor a la URL si existe.
@@ -97,8 +99,6 @@ function actualizarCarrito() {
   let total = 0;
   carrito.forEach(item => {
     const li = document.createElement("li");
-    // Aseguramos que el producto en el carrito siempre tenga el WhatsApp del vendedor final (aunque no lo necesite en el envío)
-    // Pero lo dejamos como estaba, el envío ya usa la variable global.
     li.innerHTML = `
       <span>${item.nombre} (cód: ${item.codigo}) - Gs. ${item.subtotal.toLocaleString()}</span>
       <input type="number" min="1" value="${item.cantidad}" data-codigo="${item.codigo}" />
@@ -123,8 +123,7 @@ document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   if(carrito.length === 0) return alert("El carrito está vacío");
 
-  // 💡 MODIFICACIÓN 3: Eliminar la lógica de agrupar por vendedor y usar la variable global.
-  // El número de WhatsApp será el que se haya determinado en la carga de datos.
+  // 💡 MODIFICACIÓN 3: Usar la variable global del vendedor asignado.
   const vendedorFinal = whatsappVendedorAsignado; 
 
   const items = carrito;
@@ -142,11 +141,19 @@ document.getElementById("boton-carrito").addEventListener("click",()=>{
   document.getElementById("mini-carrito").scrollIntoView({behavior:"smooth"});
 });
 
-// 🔹 Cargar productos
+// 🔹 Cargar productos (Fetch con manejo robusto de errores)
 fetch(urlProductos)
-  .then(res=>res.json())
+  .then(res => {
+    // 💡 Nuevo: Chequeo estricto del estado HTTP
+    if (!res.ok) {
+        // En caso de error HTTP (404, 500, etc.), lanzamos un error con el estado
+        throw new Error(`Error en la conexión a Apps Script: ${res.status} ${res.statusText}`); 
+    }
+    // Intentamos parsear el JSON
+    return res.json();
+  })
   .then(data=>{
-    // 💡 MODIFICACIÓN 4: Capturar el número de WhatsApp si Apps Script lo devolvió.
+    // 💡 MODIFICACIÓN 4A: Capturar el número de WhatsApp si Apps Script lo devolvió.
     if (data.telefonoVendedor) {
       whatsappVendedorAsignado = data.telefonoVendedor;
     }
@@ -155,7 +162,7 @@ fetch(urlProductos)
     document.getElementById("acordeones-container").style.display = "block";
     const container = document.getElementById("acordeones-container");
     
-    // Asumimos que data.hojas contiene el catálogo, ignorando la hoja de 'vendedores'.
+    // 💡 MODIFICACIÓN 4B: Procesar solo los datos de productos y no la hoja de vendedores.
     const todosLosProductos = data.hojas
         .filter(s => s.nombreHoja?.toLowerCase() !== 'vendedores')
         .flatMap(h => h.datos);
@@ -185,8 +192,6 @@ fetch(urlProductos)
         const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
         const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
         const imagen = (item["Imagen"]||"").trim();
-        // 💡 Línea original modificada para usar solo el WhatsApp del vendedor final
-        // const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim(); 
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
@@ -212,13 +217,12 @@ fetch(urlProductos)
           const qty = parseInt(qtyInput.value);
           const precioUnitario = obtenerPrecio(qty, precioMinorista, precioMayorista);
           const subtotal = precioUnitario * qty;
-          const existente = carrito.find(p=>p.codigo===codigo); // Se eliminó la verificación de whatsapp
+          const existente = carrito.find(p=>p.codigo===codigo); 
           if(existente){
             existente.cantidad = qty;
             existente.precioUnitario = precioUnitario;
             existente.subtotal = subtotal;
           } else {
-            // 💡 Se eliminó la variable whatsapp al pushear al carrito
             carrito.push({nombre,codigo,cantidad:qty,precioUnitario,subtotal}); 
           }
           btn.textContent = "Agregado ✅";
@@ -244,10 +248,10 @@ fetch(urlProductos)
     });
   })
   .catch(err=>{
+    // 💡 Nuevo: Mostrar el error detallado en consola, pero el mensaje genérico al usuario.
     console.error("Error cargando productos:", err);
-    document.getElementById("loader-overlay").innerHTML="<p>Error al cargar los productos 😢</p>";
+    document.getElementById("loader-overlay").innerHTML=`<p>Error al cargar los productos 😢. Revisá la Consola (F12) para más detalles.</p>`;
   });
 </script>
 </body>
 </html>
-
