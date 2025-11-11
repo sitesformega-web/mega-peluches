@@ -71,8 +71,15 @@ h1 { text-align:center; margin-bottom:30px; }
 <script>
 let carrito = [];
 
-// URL de productos
-const urlProductos = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec?sheet=Navideños";
+// 🔹 Detectar vendedor en la URL
+const params = new URLSearchParams(window.location.search);
+const vendedorParam = params.get("vendedor");
+
+// 🔹 Construir URL de productos
+const baseApi = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec";
+const urlProductos = vendedorParam
+  ? `${baseApi}?sheet=Navideños&vendedor=${encodeURIComponent(vendedorParam)}`
+  : `${baseApi}?sheet=Navideños`;
 
 // 🔹 Función para obtener precio
 function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
@@ -107,7 +114,7 @@ function actualizarCarrito() {
   }
 }
 
-// 🔹 Enviar pedido por WhatsApp (usando WhatsApp de cada producto)
+// 🔹 Enviar pedido por WhatsApp
 document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   if(carrito.length === 0) return alert("El carrito está vacío");
@@ -115,12 +122,11 @@ document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   // Agrupar productos por vendedor
   const pedidosPorVendedor = {};
   carrito.forEach(item => {
-    const vendedor = item.whatsapp || "595986830888"; // fallback
+    const vendedor = item.whatsapp || "595986830888";
     if(!pedidosPorVendedor[vendedor]) pedidosPorVendedor[vendedor] = [];
     pedidosPorVendedor[vendedor].push(item);
   });
 
-  // Abrir un WhatsApp por cada vendedor
   Object.keys(pedidosPorVendedor).forEach(vendedor => {
     const items = pedidosPorVendedor[vendedor];
     const mensaje = items.map(i=>`${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`).join("%0A");
@@ -143,8 +149,18 @@ fetch(urlProductos)
     document.getElementById("loader-overlay").style.display = "none";
     document.getElementById("acordeones-container").style.display = "block";
     const container = document.getElementById("acordeones-container");
+
+    // Compatibilidad: si el App Script devuelve estructura {productos, telefonoVendedor}
+    const productos = data.productos || data;
+    const telefonoVendedor = data.telefonoVendedor || null;
+
+    // Si el link incluye vendedor y App Script devuelve su número, usarlo en todos los productos
+    if (telefonoVendedor) {
+      productos.forEach(p => p["WhatsApp"] = telefonoVendedor);
+    }
+
     const grupos = {};
-    data.forEach(item=>{
+    productos.forEach(item=>{
       const etiqueta = (item["Etiqueta"]||"Sin Categoría").trim();
       if(!grupos[etiqueta]) grupos[etiqueta] = [];
       grupos[etiqueta].push(item);
@@ -168,7 +184,7 @@ fetch(urlProductos)
         const precioMinorista = (item["Precio Minorista"]||"0").toString().trim();
         const precioMayorista = (item["Precio Mayorista"]||"0").toString().trim();
         const imagen = (item["Imagen"]||"").trim();
-        const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim(); // cada producto su vendedor
+        const whatsapp = (item["WhatsApp"]||"595986830888").toString().trim();
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
