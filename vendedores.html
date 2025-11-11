@@ -5,15 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Módulo de Vendedores - MegaShop</title>
 <style>
-  body { font-family: "Poppins", sans-serif; background: #f3f4f6; color: #111827; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
-  .container { background:white; padding:30px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1); max-width:420px; width:90%; }
-  h2 { text-align:center; color:#293073; margin-bottom:20px; }
-  label { display:block; font-weight:600; margin-top:15px; color:#374151; }
-  select, button { width:100%; padding:10px; margin-top:8px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
-  button { background:#293073; color:white; cursor:pointer; margin-top:20px; font-weight:600; transition:0.2s; }
-  button:hover { background:#1e275a; }
-  .output { margin-top:20px; text-align:center; word-wrap:break-word; background:#f9fafb; padding:10px; border-radius:8px; border:1px dashed #ccc; }
-  .copy-btn { background:#2563eb; margin-top:10px; }
+  body {
+    font-family: "Poppins", sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    margin:0;
+  }
+  .container {
+    background:white;
+    padding:30px;
+    border-radius:16px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.1);
+    max-width:420px;
+    width:90%;
+  }
+  h2 {
+    text-align:center;
+    color:#293073;
+    margin-bottom:20px;
+  }
+  label {
+    display:block;
+    font-weight:600;
+    margin-top:15px;
+    color:#374151;
+  }
+  select, button {
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:15px;
+  }
+  button {
+    background:#293073;
+    color:white;
+    cursor:pointer;
+    margin-top:20px;
+    font-weight:600;
+    transition:0.2s;
+  }
+  button:hover {
+    background:#1e275a;
+  }
+  .output {
+    margin-top:20px;
+    text-align:center;
+    word-wrap:break-word;
+    background:#f9fafb;
+    padding:10px;
+    border-radius:8px;
+    border:1px dashed #ccc;
+  }
+  .copy-btn {
+    background:#2563eb;
+    margin-top:10px;
+  }
+  .small {
+    font-size:12px;
+    color:#6b7280;
+    margin-top:5px;
+  }
 </style>
 </head>
 <body>
@@ -21,10 +78,15 @@
   <h2>🔗 Generador de Enlaces</h2>
 
   <label for="vendedor">Vendedor:</label>
-  <select id="vendedor"></select>
+  <select id="vendedor">
+    <option value="">-- Seleccioná --</option>
+  </select>
 
   <label for="categoria">Categoría:</label>
-  <select id="categoria"></select>
+  <select id="categoria">
+    <option value="">-- Seleccioná --</option>
+  </select>
+  <div class="small">Las categorías vienen de las hojas del Sheet (excepto "Vendedores").</div>
 
   <button onclick="generarLink()">Generar enlace</button>
 
@@ -33,11 +95,17 @@
 </div>
 
 <script>
-const apiUrl = 'https://script.google.com/macros/s/AKfycbwbDwXa0gzLkqo8BKPy99wjpbj2vaNNw7JE5WqBhSHVgngzhXwiIzpDBdVnuYpd1L0nzg/exec';
-const baseUrl = 'https://sites.google.com/view/megashop-lista';
-let vendedoresMap = {}; // nombre → whatsapp (solo para referencia visual)
+// 👉 TU exec actual:
+const apiUrl = 'https://script.google.com/macros/s/AKfycbwqc3PKJlfYuTXZWukUixxbskmD85RXaCS1TVsGrsxxRQyiLJ2MXiYl2j_CA6BTJWv3vw/exec';
 
-// 🔹 Cargar vendedores y categorías
+// 👉 URL base del Google Site donde viven los catálogos
+const baseUrl = 'https://sites.google.com/view/megashop-lista';
+
+// Solo usamos este mapa si algún día querés mostrar el número en pantalla.
+// Para la lógica actual NO es necesario para WhatsApp, eso lo resuelve el App Script.
+let vendedoresMap = {}; // nombre → whatsapp
+
+// 🔹 Cargar vendedores y categorías desde el App Script (modo meta, sin parámetros)
 async function cargarDatos() {
   try {
     const res = await fetch(apiUrl);
@@ -46,8 +114,15 @@ async function cargarDatos() {
     const vendedorSelect = document.getElementById('vendedor');
     const categoriaSelect = document.getElementById('categoria');
 
-    // 🔹 Cargar vendedores desde hoja "Vendedores"
-    if (data.vendedores && Array.isArray(data.vendedores)) {
+    // Validaciones básicas
+    if (!data || (!data.vendedores && !data.categorias)) {
+      console.error("Respuesta inesperada del API:", data);
+      alert("❌ No se pudieron cargar datos desde Sheets");
+      return;
+    }
+
+    // 🔸 Cargar vendedores (desde hoja 'Vendedores')
+    if (Array.isArray(data.vendedores)) {
       data.vendedores.forEach(v => {
         if (v.nombre && v.whatsapp) {
           vendedoresMap[v.nombre] = v.whatsapp;
@@ -60,20 +135,25 @@ async function cargarDatos() {
       });
     }
 
-    // 🔹 Cargar categorías (a partir de productos)
-    const categoriasUnicas = {};
-    if (data.productos && Array.isArray(data.productos)) {
-      data.productos.forEach(p => {
-        if (p.Etiqueta) categoriasUnicas[p.Etiqueta] = true;
+    // 🔸 Cargar categorías (todas las hojas excepto 'Vendedores')
+    if (Array.isArray(data.categorias)) {
+      data.categorias.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoriaSelect.appendChild(option);
       });
     }
 
-    Object.keys(categoriasUnicas).forEach(cat => {
-      const option = document.createElement('option');
-      option.value = cat;
-      option.textContent = cat;
-      categoriaSelect.appendChild(option);
-    });
+    // (Opcional) Restaurar última selección si existiera
+    const vendedorGuardado = localStorage.getItem('vendedorSeleccionado');
+    const categoriaGuardada = localStorage.getItem('categoriaSeleccionada');
+    if (vendedorGuardado && vendedoresMap[vendedorGuardado]) {
+      vendedorSelect.value = vendedorGuardado;
+    }
+    if (categoriaGuardada && data.categorias?.includes(categoriaGuardada)) {
+      categoriaSelect.value = categoriaGuardada;
+    }
 
   } catch (err) {
     alert("❌ Error al cargar datos desde Sheets");
@@ -81,7 +161,7 @@ async function cargarDatos() {
   }
 }
 
-// 🔹 Generar link con vendedor
+// 🔹 Generar link con vendedor y categoría
 function generarLink() {
   const categoria = document.getElementById('categoria').value;
   const vendedor = document.getElementById('vendedor').value;
@@ -91,9 +171,16 @@ function generarLink() {
     return;
   }
 
+  // Guardamos la selección por comodidad
   localStorage.setItem('vendedorSeleccionado', vendedor);
+  localStorage.setItem('categoriaSeleccionada', categoria);
 
-  const link = `${baseUrl}/${encodeURIComponent(categoria.toLowerCase())}?vendedor=${encodeURIComponent(vendedor)}`;
+  // El slug de la categoría lo hacemos en minúsculas.
+  // Si tu página en Sites usa otro slug, después ajustamos esta parte nomás.
+  const slugCategoria = categoria.toLowerCase();
+
+  const link = `${baseUrl}/${encodeURIComponent(slugCategoria)}?vendedor=${encodeURIComponent(vendedor)}`;
+
   const resultado = document.getElementById('resultado');
   const copyBtn = document.getElementById('copyBtn');
 
@@ -105,11 +192,15 @@ function generarLink() {
 // 🔹 Copiar al portapapeles
 function copiarLink() {
   const resultado = document.getElementById('resultado');
+  if (!resultado.textContent) {
+    alert("No hay enlace para copiar.");
+    return;
+  }
   navigator.clipboard.writeText(resultado.textContent);
   alert("✅ Enlace copiado al portapapeles");
 }
 
-// Inicializamos
+// Inicializamos al cargar la página
 cargarDatos();
 </script>
 </body>
