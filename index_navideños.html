@@ -70,23 +70,24 @@ h1 { text-align:center; margin-bottom:30px; }
 
 <script>
 let carrito = [];
+let telefonoVendedorGlobal = null; // 🔹 si viene desde el exec, lo guardamos acá
 
 // 🔹 Detectar vendedor en la URL
 const params = new URLSearchParams(window.location.search);
 const vendedorParam = params.get("vendedor");
 
-// 🔹 Construir URL de productos (nuevo exec unificado)
+// 🔹 Construir URL de productos (exec unificado)
 const baseApi = "https://script.google.com/macros/s/AKfycbwqc3PKJlfYuTXZWukUixxbskmD85RXaCS1TVsGrsxxRQyiLJ2MXiYl2j_CA6BTJWv3vw/exec";
 const urlProductos = vendedorParam
   ? `${baseApi}?sheet=Navideños&vendedor=${encodeURIComponent(vendedorParam)}`
   : `${baseApi}?sheet=Navideños`;
 
-// 🔹 Función para obtener precio (minorista / mayorista)
+// 🔹 Función para obtener precio
 function obtenerPrecio(cantidad, precioMinorista, precioMayorista){
   return cantidad >= 6 ? parseInt(precioMayorista) : parseInt(precioMinorista);
 }
 
-// 🔹 Actualizar carrito (render + eventos de eliminar / cambiar cantidad)
+// 🔹 Actualizar carrito
 function actualizarCarrito() {
   const lista = document.getElementById("lista-carrito");
   const contador = document.getElementById("contador-carrito");
@@ -116,7 +117,7 @@ function actualizarCarrito() {
     botonFlotante.style.display = "none";
   }
 
-  // 🔸 Evento: eliminar ítem
+  // 🔸 Eliminar ítem
   lista.querySelectorAll(".eliminar-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const codigo = btn.getAttribute("data-codigo");
@@ -126,7 +127,7 @@ function actualizarCarrito() {
     });
   });
 
-  // 🔸 Evento: cambiar cantidad en el mini-carrito
+  // 🔸 Cambiar cantidad desde el mini-carrito
   lista.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener("change", () => {
       let cantidad = parseInt(input.value);
@@ -137,7 +138,6 @@ function actualizarCarrito() {
       const whatsapp = input.getAttribute("data-whatsapp");
       const item = carrito.find(p => p.codigo === codigo && p.whatsapp === whatsapp);
       if (item) {
-        // Recalcular precioUnitario según nueva cantidad (respeta lógica minorista/mayorista)
         const nuevoPrecioUnitario = obtenerPrecio(
           cantidad,
           item.precioMinorista,
@@ -157,7 +157,19 @@ document.getElementById("enviar-whatsapp").addEventListener("click", e => {
   e.preventDefault();
   if(carrito.length === 0) return alert("El carrito está vacío");
 
-  // Agrupar productos por vendedor
+  // ⚡ CASO 1: hay vendedor definido en el exec → TODO va a ese número
+  if (telefonoVendedorGlobal) {
+    const mensaje = carrito
+      .map(i => `${i.nombre} (cód:${i.codigo}) - Cantidad: ${i.cantidad} - Gs. ${i.subtotal.toLocaleString()}`)
+      .join("%0A");
+    const total = carrito.reduce((acc,i)=>acc+i.subtotal,0);
+    const texto = `Hola! Quiero:%0A${mensaje}%0ATotal: Gs. ${total.toLocaleString()}`;
+    const link = `https://wa.me/${telefonoVendedorGlobal}?text=${texto}`;
+    window.open(link,"_blank");
+    return;
+  }
+
+  // ⚡ CASO 2: sin vendedor → agrupamos por WhatsApp de producto (comportamiento anterior)
   const pedidosPorVendedor = {};
   carrito.forEach(item => {
     const vendedor = item.whatsapp || "595986830888";
@@ -188,12 +200,13 @@ fetch(urlProductos)
     document.getElementById("acordeones-container").style.display = "block";
     const container = document.getElementById("acordeones-container");
 
-    // Estructura {productos, telefonoVendedor}
     const productos = data.productos || data;
     const telefonoVendedor = data.telefonoVendedor || null;
 
-    // Si el link incluye vendedor y App Script devuelve su número, usarlo en todos los productos
+    // Guardamos globalmente el teléfono del vendedor (si vino)
     if (telefonoVendedor) {
+      telefonoVendedorGlobal = telefonoVendedor;
+      // Si querés además pisar el campo WhatsApp de cada producto, dejamos esto:
       productos.forEach(p => p["WhatsApp"] = telefonoVendedor);
     }
 
@@ -265,7 +278,6 @@ fetch(urlProductos)
               precioUnitario,
               subtotal,
               whatsapp,
-              // guardamos para recalcular después
               precioMinorista: parseInt(precioMinorista),
               precioMayorista: parseInt(precioMayorista)
             });
