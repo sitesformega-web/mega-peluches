@@ -76,7 +76,7 @@ const params = new URLSearchParams(window.location.search);
 const vendedorParam = params.get("vendedor");
 
 // 🔹 Construir URL de productos
-const baseApi = "https://script.google.com/macros/s/AKfycbyUxac-gFw8to8vmh702KvICPDPrJ2Vd1apfpVECM-1gqAM9EF8RfzE9GnERUV6BpFAYw/exec";
+const baseApi = "https://script.google.com/macros/s/AKfycbwbDwXa0gzLkqo8BKPy99wjpbj2vaNNw7JE5WqBhSHVgngzhXwiIzpDBdVnuYpd1L0nzg/exec";
 const urlProductos = vendedorParam
   ? `${baseApi}?sheet=Navideños&vendedor=${encodeURIComponent(vendedorParam)}`
   : `${baseApi}?sheet=Navideños`;
@@ -247,3 +247,4 @@ fetch(urlProductos)
 </script>
 </body>
 </html>
+
