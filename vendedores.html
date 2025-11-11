@@ -35,7 +35,7 @@
 <script>
 const apiUrl = 'https://script.google.com/macros/s/AKfycbwbDwXa0gzLkqo8BKPy99wjpbj2vaNNw7JE5WqBhSHVgngzhXwiIzpDBdVnuYpd1L0nzg/exec';
 const baseUrl = 'https://sites.google.com/view/megashop-lista';
-let vendedoresMap = {}; // nombre → whatsapp
+let vendedoresMap = {}; // nombre → whatsapp (solo para referencia visual)
 
 // 🔹 Cargar vendedores y categorías
 async function cargarDatos() {
@@ -46,16 +46,11 @@ async function cargarDatos() {
     const vendedorSelect = document.getElementById('vendedor');
     const categoriaSelect = document.getElementById('categoria');
 
-    const hojaVendedores = data.find(s => s.nombreHoja?.toLowerCase() === 'vendedores');
-    const hojasCategorias = data.filter(s => s.nombreHoja?.toLowerCase() !== 'vendedores');
-
-    // Cargar vendedores
-    if (hojaVendedores && hojaVendedores.datos) {
-      hojaVendedores.datos.forEach(v => {
+    // 🔹 Cargar vendedores desde hoja "Vendedores"
+    if (data.vendedores && Array.isArray(data.vendedores)) {
+      data.vendedores.forEach(v => {
         if (v.nombre && v.whatsapp) {
-          const cleanNumber = v.whatsapp.toString().replace(/\s+/g,'');
-          // clave normalizada a minúsculas para evitar errores de encoding
-          vendedoresMap[v.nombre.toLowerCase().trim()] = cleanNumber;
+          vendedoresMap[v.nombre] = v.whatsapp;
 
           const option = document.createElement('option');
           option.value = v.nombre;
@@ -65,11 +60,18 @@ async function cargarDatos() {
       });
     }
 
-    // Cargar categorías
-    hojasCategorias.forEach(cat => {
+    // 🔹 Cargar categorías (a partir de productos)
+    const categoriasUnicas = {};
+    if (data.productos && Array.isArray(data.productos)) {
+      data.productos.forEach(p => {
+        if (p.Etiqueta) categoriasUnicas[p.Etiqueta] = true;
+      });
+    }
+
+    Object.keys(categoriasUnicas).forEach(cat => {
       const option = document.createElement('option');
-      option.value = cat.nombreHoja.trim();
-      option.textContent = cat.nombreHoja;
+      option.value = cat;
+      option.textContent = cat;
       categoriaSelect.appendChild(option);
     });
 
@@ -89,12 +91,9 @@ function generarLink() {
     return;
   }
 
-  // Guardamos el vendedor seleccionado en localStorage
   localStorage.setItem('vendedorSeleccionado', vendedor);
 
-  // Generamos el enlace con encodeURIComponent solo para la URL
   const link = `${baseUrl}/${encodeURIComponent(categoria.toLowerCase())}?vendedor=${encodeURIComponent(vendedor)}`;
-
   const resultado = document.getElementById('resultado');
   const copyBtn = document.getElementById('copyBtn');
 
@@ -115,5 +114,3 @@ cargarDatos();
 </script>
 </body>
 </html>
-
-
